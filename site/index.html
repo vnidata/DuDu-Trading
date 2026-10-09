@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BuBu-Trading — Donchian Breakout + Genetic Algorithm cho thị trường Việt Nam</title>
+<meta name="description" content="Bảng điều khiển định lượng: chiến lược Donchian Breakout (Turtle System 2) tối ưu bằng thuật toán di truyền trên rổ VN100, dữ liệu vnstock, xử lý đặc thù biên độ ±7%, T+2.5 và cấm bán khống." />
+<link rel="stylesheet" href="assets/styles.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%BB%3C/text%3E%3C/svg%3E" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
+<script src="assets/app.js" defer></script>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <h1>BuBu<span class="dot">·</span>Trading</h1>
+      <span class="tag">Donchian Breakout (Turtle S2) × Genetic Algorithm — VN100</span>
+    </div>
+    <div class="top-meta" id="topMeta">
+      <span><b>Dữ liệu</b> <span id="metaSource">vnstock · VCI</span></span>
+      <span><b>Universe</b> <span id="metaUniverse">—</span></span>
+      <span><b>Kỳ</b> <span id="metaRange">—</span></span>
+      <span><b>Cập nhật</b> <span id="metaUpdated">—</span></span>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="overview" class="active">Tổng quan</button>
+    <button data-tab="symbols">Kết quả theo mã</button>
+    <button data-tab="ga">Tối ưu GA</button>
+    <button data-tab="walkforward">Walk-forward</button>
+    <button data-tab="portfolio">Danh mục</button>
+    <button data-tab="constraints">Đặc thù Việt Nam</button>
+    <button data-tab="method">Phương pháp &amp; Rủi ro</button>
+  </nav>
+</header>
+
+<main>
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    Đang nạp kết quả nghiên cứu…
+  </div>
+
+  <div id="app" style="display:none">
+
+    <!-- ================= TỔNG QUAN ================= -->
+    <section class="tab active" id="tab-overview">
+      <h2>Tóm tắt điều hành</h2>
+      <div class="grid c4" id="kpiRow"></div>
+
+      <h2>Đường vốn danh mục so với chỉ số tham chiếu</h2>
+      <div class="card">
+        <div class="chart-wrap lg"><canvas id="chartPortfolio"></canvas></div>
+        <div class="legend" id="legendPortfolio"></div>
+        <p class="note" id="portfolioNote"></p>
+        <table class="data" id="benchCompare" style="margin-top:10px"></table>
+      </div>
+
+      <div class="grid c2" style="margin-top:16px">
+        <div class="card">
+          <h3>Phân phối Calmar theo mã</h3>
+          <div class="chart-wrap sm"><canvas id="chartDistCalmar"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Phân phối Sharpe theo mã</h3>
+          <div class="chart-wrap sm"><canvas id="chartDistSharpe"></canvas></div>
+        </div>
+      </div>
+
+      <h2>Ảnh hưởng của từng ràng buộc thị trường Việt Nam</h2>
+      <div class="card">
+        <div class="chart-wrap"><canvas id="chartAblation"></canvas></div>
+        <p class="note">Mỗi thanh là trung vị Calmar trên toàn rổ khi bỏ đi một ràng buộc. Chênh lệch so với cột “Đầy đủ ràng buộc” cho biết ràng buộc đó đóng góp hay triệt tiêu lợi nhuận.</p>
+      </div>
+
+      <h2>Bản đồ nhiệt tham số cửa sổ vào lệnh</h2>
+      <div class="card">
+        <div class="chart-wrap sm"><canvas id="chartHeatmap"></canvas></div>
+        <p class="note">Quét entry_window 40–70 phiên (exit 20, ATR 20) trên tập train. Đường liền là Calmar trung vị; vùng phẳng rộng là dấu hiệu tham số bền vững, đỉnh nhọn đơn lẻ là dấu hiệu overfit.</p>
+      </div>
+    </section>
+
+    <!-- ================= THEO MÃ ================= -->
+    <section class="tab" id="tab-symbols">
+      <h2>Kết quả theo từng mã — cấu hình Donchian-55 mặc định</h2>
+      <div class="grid c3" id="symKpi"></div>
+
+      <div class="toolbar" style="margin-top:16px">
+        <input type="search" id="symSearch" placeholder="Tìm mã… (ví dụ FPT)" />
+        <select id="symFilter">
+          <option value="all">Tất cả mã</option>
+          <option value="pass">Chỉ mã đạt cổng OOS (Calmar &gt; 0.5)</option>
+          <option value="pos">Chỉ mã Calmar dương</option>
+          <option value="adv">Chỉ mã đạt ADV ≥ 30 tỷ</option>
+        </select>
+        <select id="symSort">
+          <option value="calmar">Xếp theo Calmar</option>
+          <option value="sharpe">Xếp theo Sharpe</option>
+          <option value="cagr">Xếp theo CAGR</option>
+          <option value="max_dd">Xếp theo MaxDD (nhẹ nhất)</option>
+          <option value="trades_per_year">Xếp theo tần suất lệnh</option>
+        </select>
+        <span class="faint" id="symCount"></span>
+      </div>
+
+      <div class="table-scroll">
+        <table class="data" id="symTable">
+          <thead>
+            <tr>
+              <th>Mã</th><th>ADV (tỷ)</th><th>CAGR</th><th>Sharpe</th><th>Calmar</th><th>MaxDD</th>
+              <th>PF</th><th>Hit</th><th>Lệnh/năm</th><th>R tb</th><th>OOS Calmar</th><th>OOS</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <h2 id="symDetailTitle">Chi tiết mã</h2>
+      <div class="card">
+        <div class="grid c4" id="symDetailKpi"></div>
+        <div class="chart-wrap" style="margin-top:12px"><canvas id="chartSymbol"></canvas></div>
+      </div>
+      <div class="grid c2" style="margin-top:16px">
+        <div class="card">
+          <h3>Tham số GA tối ưu cho mã đang chọn</h3>
+          <div id="symGaParams" class="mono faint">Chọn một mã trong bảng để xem chi tiết.</div>
+        </div>
+        <div class="card">
+          <h3>Lệnh gần nhất của danh mục có mã này</h3>
+          <div class="table-scroll sm">
+            <table class="data" id="symTrades"><thead><tr><th>Mã</th><th>Vào</th><th>Ra</th><th>Lý do</th><th>R</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= GA ================= -->
+    <section class="tab" id="tab-ga">
+      <h2>Thuật toán di truyền — hội tụ và chất lượng nghiệm</h2>
+      <div class="grid c4" id="gaKpi"></div>
+
+      <div class="grid c2" style="margin-top:16px">
+        <div class="card">
+          <h3>Hội tụ quần thể (rổ mã)</h3>
+          <div class="chart-wrap sm"><canvas id="chartGaConv"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Bản đồ quần thể: Calmar vs MaxDD</h3>
+          <div class="chart-wrap sm"><canvas id="chartGaScatter"></canvas></div>
+        </div>
+      </div>
+
+      <h2>Bộ tham số tốt nhất</h2>
+      <div class="grid c2">
+        <div class="card">
+          <h3>Bộ tham số tốt nhất từ GA trên rổ mã</h3>
+          <table class="data" id="gaBasketTable"><tbody></tbody></table>
+        </div>
+        <div class="card">
+          <h3>So sánh trong mẫu và ngoài mẫu</h3>
+          <table class="data" id="gaCompareTable">
+            <thead><tr><th>Chỉ số (ngoài mẫu)</th><th>GA</th><th>Mặc định</th><th>Chênh lệch</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <p class="note">Khoảng cách lớn giữa trong mẫu và ngoài mẫu là dấu hiệu overfitting; GA được đánh giá bằng chính khoảng cách này chứ không chỉ bằng điểm fitness.</p>
+        </div>
+      </div>
+
+      <h2>Tham số tối ưu theo từng mã (12 mã dẫn đầu theo Calmar ngoài mẫu)</h2>
+      <div class="table-scroll">
+        <table class="data" id="gaParamTable">
+          <thead><tr><th>Mã</th><th>Entry</th><th>Exit</th><th>ATR</th><th>Risk/Unit</th><th>Stop (N)</th><th>Calmar IS</th><th>Calmar OOS</th><th>Khoảng cách</th><th>OOS</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================= WALK-FORWARD ================= -->
+    <section class="tab" id="tab-walkforward">
+      <h2>Walk-forward 252/63 — phân phối ngoài mẫu trên mọi fold</h2>
+      <div class="grid c4" id="wfKpi"></div>
+
+      <div class="warn-box" style="margin-top:14px">
+        <b>Vì sao phải đọc kèm tỷ lệ fold có giao dịch.</b> Bộ lọc ADV 30 tỷ VND/phiên chặn gần như toàn bộ
+        tín hiệu trong 2016–2020, nên phần lớn fold kết thúc với đường vốn phẳng: Calmar và Sharpe bằng đúng 0
+        vì không có lệnh nào, không phải vì chiến lược hoà vốn. Ba biểu đồ dưới đây vì thế chỉ tính trên các
+        fold <i>thực sự phát sinh giao dịch</i>; con số tổng hợp trên mọi fold nằm ở thẻ KPI phía trên.
+      </div>
+
+      <div class="grid c3" style="margin-top:16px">
+        <div class="card">
+          <h3>Lợi nhuận 63 phiên test</h3>
+          <div class="chart-wrap sm"><canvas id="chartWfCalmar"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Sharpe ngoài mẫu</h3>
+          <div class="chart-wrap sm"><canvas id="chartWfSharpe"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>MaxDD ngoài mẫu</h3>
+          <div class="chart-wrap sm"><canvas id="chartWfMaxdd"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <h3>GA so với tham số mặc định trên từng fold</h3>
+        <div class="chart-wrap"><canvas id="chartWfScatter"></canvas></div>
+        <p class="note">Mỗi điểm là một fold: trục hoành là lợi nhuận 63 phiên test với tham số mặc định, trục tung là
+        cùng cửa sổ đó với tham số GA tối ưu từ 252 phiên liền trước. Điểm nằm trên đường chéo là fold GA thắng;
+        phân bố hai bên đường chéo cho biết GA có lợi thế thật hay chỉ dao động ngẫu nhiên.</p>
+      </div>
+
+      <h2>Bảng fold</h2>
+      <div class="table-scroll">
+        <table class="data" id="wfTable">
+          <thead><tr>
+            <th>Mã</th><th>#</th><th>Train</th><th>Test</th><th>Entry</th><th>Exit</th><th>ATR</th>
+            <th>Lợi nhuận test</th><th>Lợi nhuận mặc định</th><th>Calmar OOS</th><th>Sharpe OOS</th><th>MaxDD OOS</th><th>Lệnh</th><th>Cổng OOS</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <h2>Chấp nhận theo mã</h2>
+      <div class="table-scroll sm">
+        <table class="data" id="wfSymbolTable">
+          <thead><tr><th>Mã</th><th>Số fold</th><th>Tỷ lệ đạt cổng</th><th>Calmar OOS (trung vị)</th><th>Sharpe OOS (trung vị)</th><th>MaxDD OOS (trung vị)</th><th>Lợi thế GA</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================= DANH MỤC ================= -->
+    <section class="tab" id="tab-portfolio">
+      <h2>Mô phỏng danh mục chia sẻ vốn — không dùng margin</h2>
+      <div class="grid c4" id="pfKpi"></div>
+
+      <div class="toolbar" style="margin-top:16px">
+        <select id="pfVariant">
+          <option value="default">Tham số mặc định Donchian-55</option>
+          <option value="ga_basket">Tham số GA trên rổ mã</option>
+        </select>
+        <span class="faint" id="pfParams"></span>
+      </div>
+
+      <div class="grid c2">
+        <div class="card">
+          <h3>Đường vốn (gốc 100)</h3>
+          <div class="chart-wrap"><canvas id="chartPfEquity"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Drawdown</h3>
+          <div class="chart-wrap"><canvas id="chartPfDd"></canvas></div>
+        </div>
+      </div>
+
+      <div class="grid c2" style="margin-top:16px">
+        <div class="card">
+          <h3>Mức độ giải ngân (exposure)</h3>
+          <div class="chart-wrap sm"><canvas id="chartPfExp"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Phân bổ R-multiple của các lệnh</h3>
+          <div class="chart-wrap sm"><canvas id="chartPfR"></canvas></div>
+        </div>
+      </div>
+
+      <div class="warn-box" style="margin-top:14px">
+        <b>Đọc chỉ số giải ngân cho đúng.</b> Trần 60% NAV và trần 5 mã chỉ được áp tại
+        <i>thời điểm mở vị thế</i>. Khi vị thế thắng tăng giá, tỷ trọng NAV tăng theo và engine không
+        tái cân bằng — đúng như Turtle gốc. Vì vậy giải ngân đỉnh có thể vượt xa 60% dù không dùng
+        margin; tiền mặt không bao giờ âm. Đây là đặc tính của chiến lược theo xu hướng, không phải
+        lỗi mô hình, nhưng cần biết khi đọc MaxDD.
+      </div>
+
+      <h2>Lợi nhuận theo tháng</h2>
+      <div class="card"><div id="pfMonthly"></div></div>
+      <h2>Nhật ký giao dịch</h2>
+      <div class="table-scroll">
+        <table class="data" id="pfTrades">
+          <thead><tr><th>Mã</th><th>Vào</th><th>Ra</th><th>Giá vào</th><th>Giá ra</th><th>KL</th><th>Unit</th><th>Lãi/lỗ (VND)</th><th>%</th><th>R</th><th>Số phiên</th><th>Lý do thoát</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================= ĐẶC THÙ VN ================= -->
+    <section class="tab" id="tab-constraints">
+      <h2>Bốn đặc thù vi cấu trúc được mô hình hoá tường minh</h2>
+      <div class="grid c2" id="constraintCards"></div>
+
+      <h2>Bằng chứng định lượng từ ablation</h2>
+      <div class="table-scroll sm">
+        <table class="data" id="ablationTable">
+          <thead><tr><th>Kịch bản</th><th>Calmar (trung vị)</th><th>Sharpe (trung vị)</th><th>CAGR (trung vị)</th><th>MaxDD (trung vị)</th><th>Lệnh/năm</th><th>Tỷ lệ mã có CAGR dương</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <h2>Thanh khoản rổ VN100</h2>
+      <div class="card">
+        <div class="chart-wrap sm"><canvas id="chartCoverage"></canvas></div>
+        <p class="note">Tỷ lệ symbol-day đạt ngưỡng ADV theo từng năm. Đây là lý do định lượng khiến số lệnh mỗi mã rất thấp
+        giai đoạn 2016–2020: ngưỡng tuyệt đối 30 tỷ VND/phiên chỉ đạt 2,6% số quan sát năm 2016 và mở dần từ 2021.</p>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="chart-wrap sm"><canvas id="chartLiquidity"></canvas></div>
+        <p class="note">ADV trung vị 252 phiên gần nhất. Đường ngưỡng 30 tỷ VND/phiên là điều kiện lọc vào lệnh.</p>
+      </div>
+      <div class="table-scroll sm" style="margin-top:12px">
+        <table class="data" id="liquidityTable">
+          <thead><tr><th>Mã</th><th>ADV (tỷ VND)</th><th>Giá cuối kỳ</th><th>Đạt ADV ≥ 30 tỷ</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================= PHƯƠNG PHÁP ================= -->
+    <section class="tab" id="tab-method">
+      <h2>Cấu trúc chiến lược</h2>
+      <div class="card" id="methodStrategy"></div>
+
+      <h2>Hàm mục tiêu và quy trình tối ưu</h2>
+      <div class="card">
+        <div class="formula">Fitness = w₁ × Calmar − w₂ × MaxDD − phạt_tần_suất</div>
+        <p>Trọng số mặc định w₁ = 0,7 và w₂ = 0,3, ưu tiên tăng trưởng nhưng vẫn kiểm soát rủi ro. Calmar bị cắt biên trong khoảng [−3, 8] để một fold may mắn không chi phối quần thể. Số hạng phạt tăng khi số lệnh mỗi năm rơi ra ngoài khoảng 2–20 lệnh/năm, đúng yêu cầu "tần suất giao dịch trung bình".</p>
+        <div id="methodGA"></div>
+      </div>
+
+      <h2>Quản lý rủi ro và kỳ vọng thực tế</h2>
+      <div class="grid c2" id="methodRisk"></div>
+
+      <h2>Giới hạn phương pháp luận</h2>
+      <div id="methodLimits"></div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div id="footerText">
+    BuBu-Trading · mã nguồn mở trên GitHub · dữ liệu vnstock (nguồn VCI) · không phải khuyến nghị đầu tư.
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+# Thư viện lõi
+pandas>=2.0
+numpy>=1.26
+
+# Dữ liệu thị trường Việt Nam
+vnstock>=3.2.5
+
+# TLS dùng kho chứng thư Windows (bắt buộc trong mạng nội bộ có proxy chèn CA)
+truststore>=0.9
+requests>=2.31
+
+# Trực quan hoá / báo cáo
+matplotlib>=3.8
+openpyxl>=3.1
+
+# Kiểm thử
+pytest>=8.0

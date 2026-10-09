@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bubu-trading"
+version = "1.0.0"
+description = "Donchian Breakout (Turtle System 2) + Genetic Algorithm cho thị trường chứng khoán Việt Nam"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Nguyễn Thế Kiên", email = "kienhpw@gmail.com" }]
+keywords = ["quantitative-finance", "vnstock", "vietnam-stock-market", "donchian", "turtle-trading", "genetic-algorithm"]
+dependencies = [
+  "pandas>=2.0",
+  "numpy>=1.26",
+  "vnstock>=3.2.5",
+  "truststore>=0.9",
+  "requests>=2.31",
+]
+
+[project.optional-dependencies]
+report = ["matplotlib>=3.8", "openpyxl>=3.1"]
+dev = ["pytest>=8.0"]
+
+[project.urls]
+Homepage = "https://vnidata.github.io/BuBu-Trading/"
+Repository = "https://github.com/vnidata/BuBu-Trading"
+Methodology = "https://github.com/vnidata/BuBu-Trading/blob/main/METHODOLOGY.md"
+
+[tool.setuptools]
+packages = ["bubu"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = [
+  "ignore::DeprecationWarning",
+  "ignore::FutureWarning",
+]

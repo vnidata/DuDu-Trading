@@ -1,0 +1,57 @@
+name: Cập nhật dữ liệu nghiên cứu
+
+# Chạy hằng tuần để refresh OHLCV, chạy lại pipeline và commit dữ liệu website.
+# Có thể kích hoạt thủ công qua workflow_dispatch.
+
+on:
+  schedule:
+    - cron: "0 22 * * 5"   # 05:00 giờ Việt Nam thứ Bảy (UTC+7)
+  workflow_dispatch:
+    inputs:
+      fast:
+        description: "Chạy GA rút gọn để thử nghiệm"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Cài phụ thuộc
+        run: pip install -r requirements.txt
+
+      - name: Kiểm thử
+        run: python -m pytest tests -q
+
+      - name: Tải dữ liệu VN100
+        run: python scripts/fetch_data.py --group VN100 --start 2016-01-01 --max-rounds 8
+
+      - name: Chạy pipeline nghiên cứu
+        run: |
+          python scripts/run_research.py --jobs 4 ${{ inputs.fast && '--fast' || '' }}
+
+      - name: Kiểm tra website
+        run: python scripts/build_site.py --check
+
+      - name: Commit dữ liệu mới
+        run: |
+          git config user.name "bubu-bot"
+          git config user.email "bubu-bot@users.noreply.github.com"
+          git add site/data data/manifest.json data/universe_*.json
+          if git diff --cached --quiet; then
+            echo "Không có thay đổi dữ liệu."
+          else
+            git commit -m "chore(data): cập nhật kết quả nghiên cứu $(date -u +%Y-%m-%d)"
+            git push
+          fi

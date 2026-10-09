@@ -1,0 +1,64 @@
+name: Deploy website lên GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Kiểm tra dữ liệu website
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, sys
+          site = pathlib.Path("site")
+          required = ["meta.json","symbols.json","curves.json","portfolio.json","ga.json",
+                      "walkforward.json","ablation.json","heatmap.json","liquidity.json"]
+          missing = []
+          for name in required:
+              p = site / "data" / name
+              if not p.exists():
+                  missing.append(name); continue
+              json.loads(p.read_text(encoding="utf-8"))
+              print(f"OK  data/{name}  {p.stat().st_size/1024:.1f} KB")
+          for rel in ["index.html","assets/app.js","assets/styles.css"]:
+              assert (site / rel).exists(), f"thiếu {rel}"
+          if missing:
+              print("THIẾU:", missing); sys.exit(1)
+          PY
+
+      - name: Sinh favicon và robots
+        run: |
+          printf 'User-agent: *\nAllow: /\n' > site/robots.txt
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
