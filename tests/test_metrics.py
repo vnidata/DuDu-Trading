@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bubu.metrics import (
+from dudu.metrics import (
     drawdown_series,
     equity_metrics,
     max_drawdown,

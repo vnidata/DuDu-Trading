@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "bubu-trading"
+name = "dudu-trading"
 version = "1.0.0"
 description = "Donchian Breakout (Turtle System 2) + Genetic Algorithm cho thị trường chứng khoán Việt Nam"
 readme = "README.md"
@@ -24,12 +24,12 @@ report = ["matplotlib>=3.8", "openpyxl>=3.1"]
 dev = ["pytest>=8.0"]
 
 [project.urls]
-Homepage = "https://vnidata.github.io/BuBu-Trading/"
-Repository = "https://github.com/vnidata/BuBu-Trading"
-Methodology = "https://github.com/vnidata/BuBu-Trading/blob/main/METHODOLOGY.md"
+Homepage = "https://vnidata.github.io/DuDu-Trading/"
+Repository = "https://github.com/vnidata/DuDu-Trading"
+Methodology = "https://github.com/vnidata/DuDu-Trading/blob/main/METHODOLOGY.md"
 
 [tool.setuptools]
-packages = ["bubu"]
+packages = ["dudu"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

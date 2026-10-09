@@ -16,16 +16,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from bubu.config import (
+from dudu.config import (
     GAConfig,
     RESULTS_DIR,
     SITE_DATA_DIR,
     BacktestConfig,
     WalkForwardConfig,
 )
-from bubu.pipeline import build_bank, run_walkforward
-from bubu.report import build_walkforward_payload
-from bubu.utils import setup_logging, write_json, write_json_gz
+from dudu.pipeline import build_bank, run_walkforward
+from dudu.report import build_walkforward_payload
+from dudu.utils import setup_logging, write_json, write_json_gz
 
 import gzip
 import logging

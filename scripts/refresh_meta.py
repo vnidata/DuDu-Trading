@@ -17,10 +17,10 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from bubu.config import BENCHMARK_SYMBOL, ROOT, SITE_DATA_DIR
-from bubu.data import CachePolicy, load_benchmark
-from bubu.metrics import equity_metrics
-from bubu.utils import safe_float, setup_logging, utc_now_iso, write_json
+from dudu.config import BENCHMARK_SYMBOL, ROOT, SITE_DATA_DIR
+from dudu.data import CachePolicy, load_benchmark
+from dudu.metrics import equity_metrics
+from dudu.utils import safe_float, setup_logging, utc_now_iso, write_json
 
 import logging
 

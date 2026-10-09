@@ -1,4 +1,4 @@
-# BuBu-Trading
+# DuDu-Trading
 
 **Donchian Breakout (Turtle System 2) × Genetic Algorithm cho thị trường chứng khoán Việt Nam**
 
@@ -116,12 +116,12 @@ python scripts/run_research.py --limit 12 --fast --no-walkforward
 
 Thư viện `vnai` đi kèm vnstock áp trần **60 request/phút** cho nguồn VCI và gọi thẳng
 `sys.exit()` khi vượt trần. Pipeline tự điều tiết xuống **48 request/phút** bằng
-`bubu.data.RateLimiter` và dừng mềm (`DataFetchInterrupted`) để lần chạy sau tiếp tục từ cache.
+`dudu.data.RateLimiter` và dừng mềm (`DataFetchInterrupted`) để lần chạy sau tiếp tục từ cache.
 
 ## 5. Kiến trúc mã nguồn
 
 ```
-bubu/
+dudu/
   config.py       Cấu hình vi cấu trúc thị trường, tham số chiến lược, không gian GA
   data.py         Universe VCI, tải OHLCV vnstock, cache CSV nén, điều tiết rate limit
   indicators.py   Donchian, ATR Wilder, SMA, giá trần/sàn, FeatureBank tính trước

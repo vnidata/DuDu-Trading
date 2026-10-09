@@ -1,4 +1,4 @@
-# Phương pháp luận — BuBu-Trading
+# Phương pháp luận — DuDu-Trading
 
 Tài liệu này ghi lại toàn bộ giả định, công thức và quy trình kiểm định đứng sau
 website. Mục tiêu là để người đọc tái lập được kết quả và tự đánh giá độ tin cậy,
@@ -22,14 +22,14 @@ thay vì chỉ nhìn vào một con số tổng hợp.
 Proxy của mạng doanh nghiệp chèn chứng thư gốc vào chuỗi TLS (Kaspersky Endpoint
 Security, BSC Root CA). Bundle `certifi` mặc định của Python không chứa các chứng
 thư này nên mọi request HTTPS báo `CERTIFICATE_VERIFY_FAILED`. Thay vì tắt xác
-thực chứng thư, `bubu.utils.inject_truststore()` nạp `truststore` để dùng trực
+thực chứng thư, `dudu.utils.inject_truststore()` nạp `truststore` để dùng trực
 tiếp Windows Root store.
 
 ### 1.2 Điều tiết nhịp gọi API
 
 `vnai` (thư viện phụ trợ của vnstock) áp trần **60 request/phút** cho nguồn VCI
 và gọi thẳng `sys.exit()` khi vượt trần — nghĩa là không thể bắt bằng `try/except`
-thông thường và toàn bộ tiến trình bị hủy giữa chừng. `bubu.data.RateLimiter` giữ
+thông thường và toàn bộ tiến trình bị hủy giữa chừng. `dudu.data.RateLimiter` giữ
 nhịp ở **48 request/phút**; khi vẫn chạm trần, `DataFetchInterrupted` được phát ra để
 pipeline dừng mềm và lần chạy sau tiếp tục từ cache.
 

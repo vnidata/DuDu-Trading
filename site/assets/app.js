@@ -1,4 +1,4 @@
-/* BuBu-Trading — bảng điều khiển tĩnh, đọc JSON từ ./data/ (GitHub Pages). */
+/* DuDu-Trading — bảng điều khiển tĩnh, đọc JSON từ ./data/ (GitHub Pages). */
 "use strict";
 
 const state = {
@@ -162,7 +162,7 @@ function fillHeader() {
   el("metaRange").textContent = `${m.data.date_start} → ${m.data.date_end}`;
   el("metaUpdated").textContent = (m.generated_at || "").slice(0, 16).replace("T", " ");
   el("footerText").innerHTML =
-    `BuBu-Trading v${m.app.version} · <a href="${m.app.repo_url}" target="_blank" rel="noopener">mã nguồn trên GitHub</a> · ` +
+    `DuDu-Trading v${m.app.version} · <a href="${m.app.repo_url}" target="_blank" rel="noopener">mã nguồn trên GitHub</a> · ` +
     `dữ liệu ${esc(m.data.source)} · ${esc(m.data.n_symbols)} mã × ${fmtInt(m.data.n_sessions)} phiên · ` +
     `sinh lúc ${esc((m.generated_at || "").slice(0, 19).replace("T", " "))} · không phải khuyến nghị đầu tư.`;
 }

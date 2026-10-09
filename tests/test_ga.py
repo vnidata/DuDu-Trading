@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bubu.config import BacktestConfig, GAConfig, ParamSpace, WalkForwardConfig
-from bubu.data import PricePanel
-from bubu.ga import (
+from dudu.config import BacktestConfig, GAConfig, ParamSpace, WalkForwardConfig
+from dudu.data import PricePanel
+from dudu.ga import (
     GENES,
     Genome,
     _aggregate,
@@ -18,8 +18,8 @@ from bubu.ga import (
     random_genome,
     run_ga,
 )
-from bubu.indicators import FeatureBank
-from bubu.walkforward import aggregate_folds, make_folds
+from dudu.indicators import FeatureBank
+from dudu.walkforward import aggregate_folds, make_folds
 
 from .test_engine import make_bank, synthetic_symbol
 

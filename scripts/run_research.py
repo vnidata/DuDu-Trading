@@ -19,7 +19,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from bubu.config import (
+from dudu.config import (
     DATA_START,
     DEFAULT_UNIVERSE_GROUP,
     GAConfig,
@@ -29,9 +29,9 @@ from bubu.config import (
     BacktestConfig,
     WalkForwardConfig,
 )
-from bubu.data import fetch_universe
-from bubu.metrics import equity_metrics
-from bubu.pipeline import (
+from dudu.data import fetch_universe
+from dudu.metrics import equity_metrics
+from dudu.pipeline import (
     build_bank,
     default_backtest,
     liquidity_coverage,
@@ -43,7 +43,7 @@ from bubu.pipeline import (
     run_portfolio_suite,
     run_walkforward,
 )
-from bubu.report import (
+from dudu.report import (
     build_ablation_payload,
     build_curves,
     build_ga_payload,
@@ -53,7 +53,7 @@ from bubu.report import (
     build_walkforward_payload,
     write_site_data,
 )
-from bubu.utils import setup_logging, write_json_gz
+from dudu.utils import setup_logging, write_json_gz
 
 log = logging.getLogger("run_research")
 
@@ -66,7 +66,7 @@ def git_sha() -> str:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Pipeline nghiên cứu BuBu-Trading")
+    ap = argparse.ArgumentParser(description="Pipeline nghiên cứu DuDu-Trading")
     ap.add_argument("--group", default=DEFAULT_UNIVERSE_GROUP)
     ap.add_argument("--start", default=DATA_START)
     ap.add_argument("--end", default=None)
@@ -164,7 +164,7 @@ def main() -> int:
     wf_payload = build_walkforward_payload(wf)
     ablation_payload = build_ablation_payload(ablation)
 
-    repo_url = "https://github.com/vnidata/BuBu-Trading"
+    repo_url = "https://github.com/vnidata/DuDu-Trading"
     meta = build_meta(
         bank_meta=bank_meta,
         cfg=cfg,
@@ -178,7 +178,7 @@ def main() -> int:
         wf_payload=wf_payload,
         git_sha=git_sha(),
         repo_url=repo_url,
-        pages_url="https://vnidata.github.io/BuBu-Trading/",
+        pages_url="https://vnidata.github.io/DuDu-Trading/",
         runtime_seconds=time.time() - t_start,
     )
 

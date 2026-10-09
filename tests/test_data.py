@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bubu.data import PricePanel, RateLimiter, _normalize, compute_adv
+from dudu.data import PricePanel, RateLimiter, _normalize, compute_adv
 
 
 def test_normalize_converts_thousand_vnd_to_vnd():

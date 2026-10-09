@@ -6,10 +6,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bubu.backtest import run_symbol_window, simulate_symbol, window_arrays
-from bubu.config import BacktestConfig, MarketConfig, PortfolioConfig, StrategyParams
-from bubu.data import PricePanel
-from bubu.indicators import (
+from dudu.backtest import run_symbol_window, simulate_symbol, window_arrays
+from dudu.config import BacktestConfig, MarketConfig, PortfolioConfig, StrategyParams
+from dudu.data import PricePanel
+from dudu.indicators import (
     FeatureBank,
     build_market_regime,
     donchian_lower,
@@ -181,7 +181,7 @@ def test_engine_is_long_only_and_cash_conserving():
 
 
 def test_size_shares_enforces_caps():
-    from bubu.backtest import _size_shares
+    from dudu.backtest import _size_shares
 
     cfg = BacktestConfig()
     p = cfg.strategy
@@ -329,7 +329,7 @@ def test_panel_columns_are_independent():
 
 
 def test_portfolio_respects_gross_exposure_cap():
-    from bubu.backtest import simulate_portfolio
+    from dudu.backtest import simulate_portfolio
 
     frames = {f"S{i}": synthetic_symbol(seed=20 + i) for i in range(6)}
     bank = make_bank(frames)

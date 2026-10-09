@@ -1,5 +1,5 @@
 /*
- * Smoke test DOM cho website BuBu-Trading.
+ * Smoke test DOM cho website DuDu-Trading.
  *
  * Chạy `site/assets/app.js` trên một DOM giả tối thiểu, nạp dữ liệu JSON thật,
  * và kiểm tra rằng toàn bộ luồng render chạy không lỗi và thực sự ghi nội dung

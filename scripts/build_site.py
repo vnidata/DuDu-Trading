@@ -19,8 +19,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from bubu.config import ROOT
-from bubu.utils import setup_logging
+from dudu.config import ROOT
+from dudu.utils import setup_logging
 
 SITE = ROOT / "site"
 REQUIRED_DATA = [
@@ -94,7 +94,7 @@ def copy_to(out: Path) -> int:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Kiểm tra và xem thử website BuBu-Trading")
+    ap = argparse.ArgumentParser(description="Kiểm tra và xem thử website DuDu-Trading")
     ap.add_argument("--check", action="store_true", help="Kiểm tra dữ liệu và tài nguyên")
     ap.add_argument("--serve", action="store_true", help="Chạy server xem thử")
     ap.add_argument("--port", type=int, default=8787)

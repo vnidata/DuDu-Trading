@@ -15,15 +15,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from bubu.config import BENCHMARK_SYMBOL, DATA_START, DEFAULT_UNIVERSE_GROUP, DATA_DIR
-from bubu.data import (
+from dudu.config import BENCHMARK_SYMBOL, DATA_START, DEFAULT_UNIVERSE_GROUP, DATA_DIR
+from dudu.data import (
     CachePolicy,
     DataFetchInterrupted,
     fetch_universe,
     load_benchmark,
     load_many,
 )
-from bubu.utils import setup_logging, utc_now_iso, write_json
+from dudu.utils import setup_logging, utc_now_iso, write_json
 
 import logging
 
