@@ -112,7 +112,7 @@ function histogramChart(id, dist, color, label, asPct = false) {
 
 /* ------------------------------ nạp dữ liệu ------------------------------ */
 async function boot() {
-  const [meta, symbols, curves, portfolio, ga, wf, ablation, heatmap, liquidity] = await Promise.all([
+  const [meta, symbols, curves, portfolio, ga, wf, ablation, heatmap, liquidity, snapshot, snapHistory] = await Promise.all([
     loadJSON("data/meta.json"),
     loadJSON("data/symbols.json"),
     loadJSON("data/curves.json"),
@@ -122,6 +122,8 @@ async function boot() {
     loadJSON("data/ablation.json"),
     loadJSON("data/heatmap.json"),
     loadJSON("data/liquidity.json"),
+    loadJSON("data/snapshot.json"),
+    loadJSON("data/snapshot_history.json"),
   ]);
 
   state.meta = meta; state.symbols = symbols || []; state.curves = curves;
@@ -129,6 +131,8 @@ async function boot() {
   state.ablation = ablation || []; state.heatmap = heatmap || [];
   state.liquidity = (liquidity && liquidity.symbols) ? liquidity.symbols : (Array.isArray(liquidity) ? liquidity : []);
   state.coverage = (liquidity && liquidity.coverage) ? liquidity.coverage : null;
+  state.snapshot = snapshot || null;
+  state.snapHistory = Array.isArray(snapHistory) ? snapHistory : [];
 
   el("loading").style.display = "none";
   el("app").style.display = "block";
@@ -146,6 +150,7 @@ async function boot() {
     });
   }
 
+  renderSnapshot();
   renderOverview();
   renderSymbols();
   renderGA();
@@ -153,7 +158,196 @@ async function boot() {
   renderPortfolio();
   renderConstraints();
   renderMethod();
+  initLivePolling();
 }
+
+/* ------------------------------ LIVE POLLING 5 PHÚT ------------------------------ */
+const POLL_INTERVAL_SECONDS = 300; // 5 phút
+let countdownSeconds = POLL_INTERVAL_SECONDS;
+let isRefreshing = false;
+
+async function refreshSnapshotData() {
+  if (isRefreshing) return;
+  isRefreshing = true;
+  const pill = el("liveStatusText");
+  if (pill) pill.textContent = "Đang tải…";
+
+  try {
+    const bust = "?_t=" + Date.now();
+    const [snap, hist] = await Promise.all([
+      loadJSON("data/snapshot.json" + bust),
+      loadJSON("data/snapshot_history.json" + bust),
+    ]);
+    if (snap) {
+      state.snapshot = snap;
+      if (Array.isArray(hist)) state.snapHistory = hist;
+      renderSnapshot();
+    }
+  } catch (err) {
+    console.warn("Lỗi refresh snapshot:", err);
+  } finally {
+    isRefreshing = false;
+    countdownSeconds = POLL_INTERVAL_SECONDS;
+    if (pill) pill.textContent = "Live";
+    updateCountdownDisplay();
+  }
+}
+
+function updateCountdownDisplay() {
+  const m = Math.floor(countdownSeconds / 60);
+  const s = countdownSeconds % 60;
+  const str = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  const cd = el("liveCountdown");
+  if (cd) cd.textContent = str;
+  const nextRef = el("snapNextRefresh");
+  if (nextRef) nextRef.textContent = `Làm mới sau: ${str}`;
+}
+
+function initLivePolling() {
+  updateCountdownDisplay();
+
+  const btn = el("btnManualRefresh");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      refreshSnapshotData();
+    });
+  }
+
+  if (typeof setInterval === "function") {
+    setInterval(() => {
+      if (countdownSeconds > 0) {
+        countdownSeconds--;
+        updateCountdownDisplay();
+      } else {
+        refreshSnapshotData();
+      }
+    }, 1000);
+  }
+}
+
+/* ------------------------------ PHIÊN GIAO DỊCH ------------------------------ */
+const SESSION_LABEL = {
+  pre_open: "Chưa mở cửa",
+  morning: "Phiên sáng",
+  lunch: "Nghỉ trưa",
+  afternoon: "Phiên chiều",
+  atc: "Phiên đóng cửa (ATC)",
+  closed: "Đã đóng cửa",
+  holiday: "Cuối tuần / ngày nghỉ",
+};
+
+function snapshotAgeHours(snap) {
+  const t = Date.parse(snap.as_of);
+  if (Number.isNaN(t)) return NaN;
+  return (Date.now() - t) / 36e5;
+}
+
+function renderSnapshot() {
+  const s = state.snapshot;
+  if (!s) {
+    el("snapBadge").innerHTML = '<span class="badge muted">chưa có dữ liệu phiên</span>';
+    el("snapKpi").innerHTML = '<div class="card"><p class="note">Chưa có ảnh chụp phiên. Chạy <code>python scripts/snapshot.py</code>.</p></div>';
+    ["snapTurnover", "snapMovers", "snapEntry"].forEach((id) => {
+      const tb = el(id) && el(id).querySelector("tbody");
+      if (tb) tb.innerHTML = "";
+    });
+    return;
+  }
+
+  const stale = snapshotAgeHours(s);
+  const fresh = Number.isFinite(stale) ? stale : 0;
+  el("snapBadge").innerHTML =
+    `<span class="badge ${s.is_final ? "ok" : "info"}">${esc(SESSION_LABEL[s.session] || s.session)}</span> ` +
+    `<span class="badge ${fresh > 30 ? "no" : "muted"}">cập nhật ${fmtAgo(fresh)}</span>`;
+
+  el("snapWarn").innerHTML = s.is_final
+    ? ""
+    : `<div class="warn-box" style="margin-bottom:12px"><b>Bar ngày chưa chốt.</b> ${esc(s.disclaimer)}</div>`;
+
+  const b = s.benchmark || {};
+  const regimeTxt = b.above_sma200 === undefined ? "—" : b.above_sma200 ? "trên SMA200" : "dưới SMA200";
+  el("snapKpi").innerHTML = [
+    kpiCard(
+      `${esc(s.benchmark ? s.benchmark.symbol : "Chỉ số")}`,
+      b.close !== undefined ? fmtInt(b.close) : "—",
+      `${fmtPct(b.change_pct)} · ${regimeTxt}`,
+      signCls(b.change_pct)
+    ),
+    kpiCard("Độ rộng thị trường", fmtPct(s.breadth.up_share, 0), `${s.breadth.up} tăng / ${s.breadth.down} giảm / ${s.breadth.flat} đứng`, s.breadth.up_share > 0.5 ? "pos" : "neg"),
+    kpiCard("Giá trị khớp lệnh", fmtNum(s.liquidity.turnover_total_bn, 0) + " tỷ", `${fmtInt(s.liquidity.n_passes_adv)}/${fmtInt(s.n_symbols)} mã đạt ADV ≥ ${fmtNum(s.liquidity.adv_min_bn, 0)} tỷ`, ""),
+    kpiCard("Tín hiệu vào lệnh", fmtInt(s.signals.n_entry), `${fmtInt(s.signals.n_exit)} tín hiệu thoát · ${fmtInt(s.signals.n_at_ceiling)} mã giá trần`, s.signals.n_entry > 0 ? "pos" : "dim"),
+  ].join("");
+
+  el("snapNote").innerHTML =
+    `Phiên <b>${esc(s.bar_date)}</b> · ảnh chụp lúc ${esc(s.as_of.slice(0, 16).replace("T", " "))} · ` +
+    `${fmtPct(s.liquidity.adv_pass_share, 0)} số mã đạt ngưỡng thanh khoản · ` +
+    `${fmtInt(s.signals.n_above_upper)} mã đang trên đỉnh ${state.meta ? state.meta.config.strategy.entry_window : 55} phiên · ` +
+    `${fmtInt(s.signals.n_regime_bull)} mã có chỉ số chung trên SMA200. ` +
+    `Số liệu phiên được làm mới 6 lần mỗi ngày giao dịch: 09:45, 10:00, 11:30, 13:30, 14:00, 15:00.`;
+
+  renderSnapIntraday();
+  renderSnapTables(s);
+}
+
+function fmtAgo(hours) {
+  if (!Number.isFinite(hours)) return "—";
+  if (hours < 0) return "vừa xong";
+  if (hours < 1) return Math.max(1, Math.round(hours * 60)) + " phút trước";
+  if (hours < 24) return hours.toFixed(0) + " giờ trước";
+  return (hours / 24).toFixed(0) + " ngày trước";
+}
+
+function renderSnapIntraday() {
+  const h = (state.snapHistory || []).slice(-60);
+  if (!h.length) return;
+  const labels = h.map((x) => x.as_of.slice(5, 16).replace("T", " "));
+  const ds = [
+    lineDataset("VN-Index", h.map((x) => x.vnindex), COLORS.accent, { width: 2, yAxisID: "y" }),
+    lineDataset("Độ rộng tăng (%)", h.map((x) => (x.up_share === null || x.up_share === undefined ? null : x.up_share * 100)), COLORS.accent2, { yAxisID: "y1" }),
+    lineDataset("Mã đạt ADV (%)", h.map((x) => (x.adv_pass_share === null || x.adv_pass_share === undefined ? null : x.adv_pass_share * 100)), COLORS.warn, { yAxisID: "y1", dash: [4, 3] }),
+  ];
+  makeChart("chartSnapIntraday", {
+    type: "line",
+    data: { labels, datasets: ds },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
+      plugins: { legend: { display: true } },
+      scales: {
+        x: { grid: { color: COLORS.grid }, ticks: { maxTicksLimit: 8 } },
+        y: { position: "left", grid: { color: COLORS.grid }, title: { display: true, text: "VN-Index", color: COLORS.text } },
+        y1: { position: "right", grid: { display: false }, min: 0, max: 100, ticks: { callback: (v) => v + "%" } },
+      },
+    },
+  });
+}
+
+function renderSnapTables(s) {
+  const chg = (v) => `<span class="${signCls(v)}">${fmtPct(v)}</span>`;
+  const flag = (r) => (r.at_ceiling ? '<span class="badge warn">trần</span>' : r.at_floor ? '<span class="badge no">sàn</span>' : "");
+
+  el("snapTurnover").querySelector("tbody").innerHTML = (s.leaders.turnover || [])
+    .map((r) => `<tr><td><b>${r.symbol}</b></td><td>${fmtNum(r.turnover_bn, 1)}</td><td class="dim">${fmtNum(r.adv20_bn, 1)}</td>
+      <td>${r.passes_adv ? '<span class="badge ok">đạt</span>' : '<span class="badge no">dưới</span>'}</td></tr>`)
+    .join("");
+
+  const movers = [...(s.leaders.gainers || []).slice(0, 5), ...(s.leaders.losers || []).slice(0, 5)];
+  el("snapMovers").querySelector("tbody").innerHTML = movers
+    .map((r) => `<tr><td><b>${r.symbol}</b></td><td>${fmtInt(r.close)}</td><td>${chg(r.change_pct)}</td><td>${flag(r)}</td></tr>`)
+    .join("");
+
+  const entries = s.signals.entry_symbols || [];
+  el("snapEntry").querySelector("tbody").innerHTML = entries.length
+    ? entries
+        .map((r) => `<tr><td><b>${r.symbol}</b></td><td>${fmtInt(r.close)}</td><td>${chg(r.change_pct)}</td>
+          <td>${fmtNum(r.turnover_bn, 1)}</td><td class="${signCls(r.dist_to_upper_pct)}">${fmtPct(r.dist_to_upper_pct)}</td>
+          <td>${fmtInt(r.units)}</td></tr>`)
+        .join("")
+    : '<tr><td colspan="6" class="faint">Không có mã nào thoả đồng thời điều kiện phá đỉnh, thanh khoản và xu hướng thị trường.</td></tr>';
+  el("snapEntryNote").textContent =
+    `Điều kiện: giá đóng cửa vượt đỉnh ${state.meta ? state.meta.config.strategy.entry_window : 55} phiên, không nằm tại giá trần, ` +
+    `ADV20 ≥ ${fmtNum(s.liquidity.adv_min_bn, 0)} tỷ và chỉ số chung trên SMA200. Cột "Unit" là khối lượng một Unit theo công thức engine.`;
+}
+
 
 function fillHeader() {
   const m = state.meta;

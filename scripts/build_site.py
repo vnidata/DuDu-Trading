@@ -33,6 +33,8 @@ REQUIRED_DATA = [
     "ablation.json",
     "heatmap.json",
     "liquidity.json",
+    "snapshot.json",
+    "snapshot_history.json",
 ]
 REQUIRED_ASSETS = ["index.html", "assets/app.js", "assets/styles.css"]
 

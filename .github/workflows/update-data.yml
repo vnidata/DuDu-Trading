@@ -1,0 +1,90 @@
+name: Cập nhật dữ liệu tự động 5 phút
+
+# Cập nhật dữ liệu mỗi 5 phút trong phiên giao dịch HOSE (giờ Việt Nam, UTC+7).
+# GitHub Actions dùng cron UTC nên mỗi mốc được quy đổi tương ứng:
+#
+#   Chu kỳ 5 phút: 09:00 - 15:00 VN = 02:00 - 08:00 UTC (T2 - T6)
+#   Mốc 15:00 VN (08:00 UTC) chốt phiên: chạy thêm pipeline nghiên cứu đầy đủ (GA + walk-forward)
+#   Mốc 05:00 VN thứ Bảy (22:00 UTC thứ Sáu): bản làm sâu cuối tuần
+#
+# LƯU Ý VỀ ĐỘ CHÍNH XÁC: cron của GitHub Actions có thể trễ 5-15 phút vào giờ cao điểm.
+# Client dashboard có tích hợp polling 5 phút tự động với cache-busting.
+
+on:
+  schedule:
+    - cron: "*/5 2-8 * * 1-5"   # Mỗi 5 phút trong phiên HOSE (09:00 - 15:00 VN)
+    - cron: "0 8 * * 1-5"       # 15:00 VN -> chốt phiên & chạy pipeline nghiên cứu đầy đủ
+    - cron: "0 22 * * 5"        # 05:00 VN thứ Bảy -> bản làm sâu cuối tuần
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Chạy cả pipeline nghiên cứu đầy đủ (GA + walk-forward)"
+        type: boolean
+        default: false
+      refresh:
+        description: "Buộc tải lại toàn bộ OHLCV, bỏ qua cache"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+# Không hủy lần chạy đang dở: một lần chạy bị hủy giữa chừng có thể để lại
+# snapshot thiếu dữ liệu.
+concurrency:
+  group: dudu-data-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Cài phụ thuộc
+        run: pip install -r requirements.txt
+
+      - name: Kiểm thử
+        run: python -m pytest tests -q
+
+      - name: Ảnh chụp thị trường trong phiên
+        run: |
+          python scripts/snapshot.py \
+            --max-age-minutes 5 \
+            ${{ inputs.refresh && '--refresh' || '' }}
+
+      - name: Pipeline nghiên cứu đầy đủ
+        if: >-
+          github.event.schedule == '0 8 * * 1-5' ||
+          github.event.schedule == '0 22 * * 5' ||
+          inputs.full == true
+        run: |
+          python scripts/fetch_data.py --group VN100 --start 2016-01-01 --max-rounds 8
+          python scripts/run_research.py --jobs 4
+
+      - name: Làm mới thẻ tổng quan
+        run: python scripts/refresh_meta.py
+
+      - name: Kiểm tra website
+        run: python scripts/build_site.py --check
+
+      - name: Commit dữ liệu mới
+        run: |
+          git config user.name "dudu-bot"
+          git config user.email "dudu-bot@users.noreply.github.com"
+          git add site/data data/manifest.json data/universe_*.json
+          if git diff --cached --quiet; then
+            echo "Không có thay đổi dữ liệu."
+            exit 0
+          fi
+          git commit -m "chore(data): cap nhat du lieu phien $(TZ=Asia/Ho_Chi_Minh date +'%Y-%m-%d %H:%M')"
+          git pull --rebase --autostash origin main
+          git push

@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from dudu.data import PricePanel, RateLimiter, _normalize, compute_adv
+from dudu.data import CachePolicy, PricePanel, RateLimiter, _fetch_vndirect, _normalize, compute_adv
 
 
 def test_normalize_converts_thousand_vnd_to_vnd():
@@ -118,3 +118,55 @@ def test_rate_limiter_enforces_window():
     # 9 request với trần 5/0,4s phải mất ít nhất một chu kỳ chờ
     assert elapsed >= 0.35
     assert limiter.usage() <= 5
+
+
+def test_cache_policy_is_fresh(tmp_path):
+    p = tmp_path / "cache.csv.gz"
+    p.write_text("dummy")
+
+    policy = CachePolicy(max_age_days=3)
+    assert policy.is_fresh(p)
+
+    # Quá 3 ngày
+    assert not policy.is_fresh(p, now=time.time() + 4 * 86400)
+
+    # max_age_minutes được ưu tiên
+    policy_min = CachePolicy(max_age_minutes=5)
+    assert policy_min.is_fresh(p)
+    assert not policy_min.is_fresh(p, now=time.time() + 301)
+
+
+def test_fetch_vndirect_normalizes_response(monkeypatch):
+    import json
+    import io
+
+    fake_payload = {
+        "s": "ok",
+        "t": [1704067200, 1704153600],
+        "o": [50.0, 51.0],
+        "h": [52.0, 53.0],
+        "l": [49.5, 50.5],
+        "c": [51.5, 52.0],
+        "v": [1000000, 1500000],
+    }
+
+    class FakeResponse:
+        def __init__(self, data):
+            self.data = json.dumps(data).encode("utf-8")
+        def read(self):
+            return self.data
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
+
+    import urllib.request
+    monkeypatch.setattr(urllib.request, "urlopen", lambda req, **kw: FakeResponse(fake_payload))
+
+    df = _fetch_vndirect("FPT", start="2024-01-01", end="2024-01-03")
+    assert len(df) == 2
+    assert "close" in df.columns
+    # 51.5 < 1000 -> converted to 51,500 VND
+    assert df["close"].iloc[0] == pytest.approx(51500.0)
+    assert df["volume"].iloc[0] == 1000000
+

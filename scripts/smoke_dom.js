@@ -149,12 +149,13 @@ async function main() {
 
   check("Không có cảnh báo nạp dữ liệu", warnings.length === 0, warnings.slice(0, 3).join(" | "));
   check("Không có lỗi console", errors.length === 0, errors.slice(0, 3).join(" | "));
-  check("Đã gọi fetch cho đủ 9 tệp dữ liệu", fetchLog.length >= 9, `${fetchLog.length} lời gọi`);
-  check("Đã khởi tạo biểu đồ", chartsCreated.length >= 10, `${chartsCreated.length} biểu đồ`);
+  check("Đã gọi fetch cho đủ 11 tệp dữ liệu", fetchLog.length >= 11, `${fetchLog.length} lời gọi`);
+  check("Đã khởi tạo biểu đồ", chartsCreated.length >= 11, `${chartsCreated.length} biểu đồ`);
 
   const expectFilled = [
     "kpiRow", "symKpi", "gaKpi", "wfKpi", "pfKpi", "constraintCards", "methodStrategy", "methodGA", "methodRisk", "methodLimits",
     "legendPortfolio", "portfolioNote", "benchCompare", "pfMonthly", "symGaParams",
+    "snapKpi", "snapNote", "snapBadge", "snapEntryNote",
   ];
   const empty = expectFilled.filter((id) => {
     const e = elements.get(id);
@@ -162,7 +163,7 @@ async function main() {
   });
   check("Các vùng nội dung chính đều được ghi", empty.length === 0, empty.join(", "));
 
-  const tablesWithBody = ["symTable", "gaBasketTable", "gaCompareTable", "gaParamTable", "wfTable", "wfSymbolTable", "pfTrades", "symTrades", "ablationTable", "liquidityTable"];
+  const tablesWithBody = ["symTable", "gaBasketTable", "gaCompareTable", "gaParamTable", "wfTable", "wfSymbolTable", "pfTrades", "symTrades", "ablationTable", "liquidityTable", "snapEntry", "snapTurnover", "snapMovers"];
   const emptyTables = tablesWithBody.filter((id) => {
     const tb = elements.get(id) && elements.get(id)._tbody;
     return !tb || tb.innerHTML.length === 0;

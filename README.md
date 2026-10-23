@@ -118,7 +118,42 @@ Thư viện `vnai` đi kèm vnstock áp trần **60 request/phút** cho nguồn 
 `sys.exit()` khi vượt trần. Pipeline tự điều tiết xuống **48 request/phút** bằng
 `dudu.data.RateLimiter` và dừng mềm (`DataFetchInterrupted`) để lần chạy sau tiếp tục từ cache.
 
-## 5. Kiến trúc mã nguồn
+## 5. Cập nhật tự động 5 phút & Nguồn cấp dữ liệu thời gian thực
+
+Hệ thống hỗ trợ cập nhật dữ liệu tự động **mỗi 5 phút trong phiên giao dịch HOSE** (09:00 - 15:00 giờ Việt Nam) với nguồn cấp dữ liệu kép:
+- **Nguồn cấp trực tuyến thời gian thực (Primary)**: VNDirect DChart API (<200ms/mã, SSL bypass, nến ngày và intraday thời gian thực).
+- **Tầng kết nối MCP (Model Context Protocol)**: Hỗ trợ SSI, DNSE, VCBS qua JSON-RPC 2.0 (`dudu/mcp_client.py`).
+- **Nguồn dữ liệu dự phòng**: Vietcap (VCI) qua vnstock 3.x với RateLimiter điều tiết 48 req/phút.
+
+Workflow GitHub Actions (`.github/workflows/update-data.yml`) kích hoạt:
+- `cron: "*/5 2-8 * * 1-5"`: Cập nhật ảnh chụp thị trường và tín hiệu mỗi 5 phút trong phiên.
+- `cron: "0 8 * * 1-5"`: 15:00 VN chốt phiên, kích hoạt pipeline nghiên cứu đầy đủ (GA + walk-forward).
+- `cron: "0 22 * * 5"`: 05:00 VN thứ Bảy bản làm sâu cuối tuần.
+
+Client web dashboard tích hợp cơ chế tự động polling mỗi 5 phút với cache-busting `?_t=...`, đồng hồ đếm ngược từng giây và nút làm mới dữ liệu tức thì.
+
+### Ba điều cần biết trước khi tin vào con số trong phiên
+
+1. **Cron của GitHub Actions không đúng phút.** Vào giờ cao điểm, workflow theo lịch có thể
+   trễ 5–30 phút hoặc bị bỏ qua. Đây là giới hạn GitHub đã ghi nhận, không phải lỗi cấu hình.
+   Website hiển thị nhãn "cập nhật N phút trước" để người đọc tự đánh giá độ tươi.
+2. **Trong phiên, bar ngày chưa hoàn tất.** Giá đóng cửa chỉ là giá khớp gần nhất nên tín hiệu
+   có thể đảo chiều trước khi phiên kết thúc. Trường `is_final` đánh dấu rõ và website hiện
+   cảnh báo vàng khi bar chưa chốt.
+3. **Workflow theo lịch tự tạm dừng sau 60 ngày repo không có hoạt động.** Commit tự động của
+   chính workflow được tính là hoạt động nên vòng lặp này tự nuôi nhau; nhưng nếu dữ liệu ngừng
+   đổi trong 60 ngày (ví dụ nguồn lỗi), lịch sẽ dừng và cần bật lại thủ công.
+
+Có thể chạy tay bất cứ lúc nào:
+
+```bash
+python scripts/snapshot.py                       # ngưỡng cache 5 phút
+python scripts/snapshot.py --refresh             # buộc tải lại toàn bộ
+python scripts/snapshot.py --offline             # chỉ đọc cache, không gọi mạng
+python scripts/snapshot.py --at "2026-10-12T10:00:00+07:00"   # mô phỏng một mốc giờ
+```
+
+## 6. Kiến trúc mã nguồn
 
 ```
 dudu/
@@ -129,24 +164,29 @@ dudu/
   metrics.py      CAGR, Sharpe, Sortino, MaxDD, Calmar, R-multiple, hit rate
   ga.py           Genetic Algorithm: genome, fitness kép, BLX-α, tournament, elitism
   walkforward.py  Walk-forward 252/63, cổng kiểm định out-of-sample
+  snapshot.py     Ảnh chụp thị trường trong phiên, nhãn phiên HOSE, lịch sử rút gọn
   pipeline.py     Điều phối 7 bước + ablation + quét lưới tham số
   report.py       Kết xuất JSON cho website
-scripts/          fetch_data.py, run_research.py, build_site.py
+scripts/          fetch_data, run_research, snapshot, rebuild_walkforward, refresh_meta,
+                  build_site, check_site.js, smoke_dom.js
 site/             Website tĩnh (HTML/CSS/JS, Chart.js CDN)
-tests/            Kiểm thử đơn vị cho engine, metrics, GA, dữ liệu
+tests/            Kiểm thử đơn vị cho engine, metrics, GA, dữ liệu, ảnh chụp phiên
 ```
 
-## 6. Kiểm thử
+## 7. Kiểm thử
 
 ```bash
-python -m pytest tests -q
+python -m pytest tests -q          # 79 test, không cần mạng
+node scripts/check_site.js         # đối chiếu id/canvas/JSON giữa HTML và JS
+node scripts/smoke_dom.js          # chạy app.js trên DOM giả với dữ liệu thật
 ```
 
-Bộ test bao phủ: tính đúng của giá trần/sàn theo bước giá HOSE, ATR Wilder, ràng buộc T+2.5,
+Bộ Python bao phủ: giá trần/sàn theo bước giá HOSE, ATR Wilder có mồi SMA, ràng buộc T+2.5,
 luật tránh giá trần, tính bất biến của engine theo cột dữ liệu (lỗi `np.roll` không `axis`
-từng làm trộn chỉ báo giữa các mã), và tính tái lập của GA theo hạt giống.
+từng làm trộn chỉ báo giữa các mã), tái lập của GA theo hạt giống, và nhãn phiên HOSE theo
+từng mốc giờ. Smoke test DOM bắt các lỗi runtime mà kiểm tra tĩnh không thấy.
 
-## 7. Giới hạn phương pháp luận
+## 8. Giới hạn phương pháp luận
 
 - **Survivorship bias**: danh sách VN100 lấy tại thời điểm chạy, không phải point-in-time.
 - **Giá điều chỉnh**: dữ liệu VCI đã điều chỉnh cổ tức/chia tách; không mô hình hoá cổ tức tiền mặt.
@@ -159,7 +199,7 @@ từng làm trộn chỉ báo giữa các mã), và tính tái lập của GA th
 
 Chi tiết đầy đủ trong [`METHODOLOGY.md`](METHODOLOGY.md).
 
-## 8. Miễn trừ trách nhiệm
+## 9. Miễn trừ trách nhiệm
 
 Đây là công cụ nghiên cứu và giáo dục. Không phải khuyến nghị đầu tư. Kết quả quá khứ không
 bảo đảm cho tương lai.

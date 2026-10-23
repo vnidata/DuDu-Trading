@@ -20,6 +20,12 @@ LOG_FORMAT = "%(asctime)s | %(levelname)-7s | %(name)s | %(message)s"
 
 def setup_logging(level: int = logging.INFO) -> None:
     """Cấu hình logging một lần cho toàn bộ tiến trình."""
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
     if logging.getLogger().handlers:
         logging.getLogger().setLevel(level)
         return

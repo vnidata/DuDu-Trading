@@ -117,34 +117,25 @@ def fetch_universe(group: str = "VN100", retries: int = 3) -> list[str]:
 class CachePolicy:
     refresh: bool = False          # tải lại kể cả khi đã có cache
     max_age_days: int = 3          # cache cũ hơn ngưỡng này sẽ được tải lại
+    max_age_minutes: float | None = None  # ngưỡng theo phút, ưu tiên hơn max_age_days
     sleep_between: float = 0.35    # giãn nhịp gọi API, tránh rate limit
+
+    def is_fresh(self, path: Path, now: float | None = None) -> bool:
+        """Cache còn dùng được không.
+
+        `max_age_minutes` phục vụ các lần làm mới trong phiên giao dịch (6 mốc
+        mỗi ngày), khi ngưỡng 3 ngày là quá thô.
+        """
+        if not path.exists():
+            return False
+        age = (now if now is not None else time.time()) - path.stat().st_mtime
+        if self.max_age_minutes is not None:
+            return age <= self.max_age_minutes * 60.0
+        return age <= self.max_age_days * 86400.0
 
 
 def _cache_path(symbol: str, start: str) -> Path:
     return RAW_DIR / f"{symbol.upper()}_{start[:4]}.csv.gz"
-
-
-def _fetch_remote(symbol: str, start: str, end: str | None, retries: int = 3) -> pd.DataFrame:
-    inject_truststore()
-    logging.getLogger("vnstock").setLevel(logging.ERROR)
-    logging.getLogger("vnai").setLevel(logging.ERROR)
-    from vnstock import Quote
-
-    last_err: Exception | None = None
-    for attempt in range(retries):
-        LIMITER.acquire()
-        try:
-            quote = Quote(symbol=symbol.upper(), source="VCI")
-            df = quote.history(start=start, end=end or None, interval="1D")
-            if df is None or len(df) == 0:
-                raise ValueError("chuỗi rỗng")
-            return _normalize(df, symbol)
-        except SystemExit as exc:  # vnai gọi sys.exit khi vượt rate limit
-            raise DataFetchInterrupted(f"vnstock dừng tiến trình: {exc}") from None
-        except Exception as exc:  # pragma: no cover - phụ thuộc mạng
-            last_err = exc
-            time.sleep(1.2 * (attempt + 1))
-    raise RuntimeError(f"Không tải được {symbol}: {last_err}")
 
 
 def _normalize(df: pd.DataFrame, symbol: str) -> pd.DataFrame:
@@ -166,7 +157,7 @@ def _normalize(df: pd.DataFrame, symbol: str) -> pd.DataFrame:
         .sort_values("time")
         .reset_index(drop=True)
     )
-    # Vnstock trả giá theo nghìn VND cho một số nguồn; VCI trả VND thực.
+    # Vnstock/VNDirect trả giá theo nghìn VND cho một số nguồn; VCI trả VND thực.
     # Chuẩn hoá về VND: nếu giá < 1000 thì gần như chắc chắn là đơn vị nghìn VND.
     med = float(out["close"].median())
     if 0 < med < 1000:
@@ -176,25 +167,146 @@ def _normalize(df: pd.DataFrame, symbol: str) -> pd.DataFrame:
     return out
 
 
+def _fetch_vndirect(symbol: str, start: str, end: str | None = None, timeout: float = 12.0) -> pd.DataFrame:
+    """Tải lịch sử OHLCV trực tiếp từ VNDirect DChart API.
+
+    Tốc độ cao (<200ms/mã), có nến ngày hiện tại (intraday) theo thời gian thực,
+    bỏ qua xác thực chứng chỉ SSL nếu chạy sau proxy doanh nghiệp, không gặp lỗi
+    rate limit khiến sập tiến trình như thư viện vnstock.
+    """
+    import json
+    import ssl
+    import urllib.request
+    from datetime import datetime
+
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
+    start_dt = datetime.fromisoformat(start) if isinstance(start, str) else datetime(2016, 1, 1)
+    start_ts = int(start_dt.timestamp())
+    if end:
+        end_dt = datetime.fromisoformat(end) if isinstance(end, str) else datetime.now()
+        end_ts = int(end_dt.timestamp())
+    else:
+        end_ts = int(time.time())
+
+    sym = symbol.upper()
+    if sym in ("VN-INDEX", "VNINDEX", "^VNINDEX"):
+        sym = "VNINDEX"
+
+    url = f"https://dchart-api.vndirect.com.vn/dchart/history?resolution=D&symbol={sym}&from={start_ts}&to={end_ts}"
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"},
+    )
+    with urllib.request.urlopen(req, context=ctx, timeout=timeout) as resp:
+        payload = json.loads(resp.read().decode("utf-8"))
+        if payload.get("s") != "ok" or not payload.get("t"):
+            raise ValueError(f"VNDirect không có dữ liệu cho {symbol}")
+        df = pd.DataFrame(
+            {
+                "time": pd.to_datetime(payload["t"], unit="s"),
+                "open": payload["o"],
+                "high": payload["h"],
+                "low": payload["l"],
+                "close": payload["c"],
+                "volume": payload["v"],
+            }
+        )
+        return _normalize(df, symbol)
+
+
+def _fetch_remote(symbol: str, start: str, end: str | None, retries: int = 3) -> pd.DataFrame:
+    """Tải dữ liệu từ xa: ưu tiên VNDirect Real-time Feed, dự phòng vnstock (VCI)."""
+    # 1. Ưu tiên VNDirect DChart API (nhanh, realtime trong phiên, bypass proxy SSL)
+    last_err: Exception | None = None
+    for attempt in range(retries):
+        try:
+            return _fetch_vndirect(symbol, start, end)
+        except Exception as exc:
+            last_err = exc
+            time.sleep(0.3 * (attempt + 1))
+
+    # 2. Dự phòng: vnstock (VCI)
+    log.warning("%s: VNDirect lỗi (%s), chuyển sang nguồn dự phòng vnstock/VCI", symbol, last_err)
+    inject_truststore()
+    logging.getLogger("vnstock").setLevel(logging.ERROR)
+    logging.getLogger("vnai").setLevel(logging.ERROR)
+    try:
+        from vnstock import Quote
+    except ImportError:
+        raise RuntimeError(f"Không tải được {symbol}: {last_err}") from last_err
+
+    for attempt in range(retries):
+        LIMITER.acquire()
+        try:
+            quote = Quote(symbol=symbol.upper(), source="VCI")
+            df = quote.history(start=start, end=end or None, interval="1D")
+            if df is None or len(df) == 0:
+                raise ValueError("chuỗi rỗng")
+            return _normalize(df, symbol)
+        except SystemExit as exc:  # vnai gọi sys.exit khi vượt rate limit
+            raise DataFetchInterrupted(f"vnstock dừng tiến trình: {exc}") from None
+        except Exception as exc:  # pragma: no cover - phụ thuộc mạng
+            last_err = exc
+            time.sleep(1.2 * (attempt + 1))
+    raise RuntimeError(f"Không tải được {symbol}: {last_err}")
+
+
+def _fetch_with_source(
+    symbol: str,
+    start: str,
+    end: str | None,
+    source: str = "auto",
+) -> pd.DataFrame:
+    """Tải nến giá từ MCP (SSI, DNSE, VCBS) hoặc vnstock VCI với cơ chế failover."""
+    source_lower = source.lower()
+    if source_lower in ("ssi", "dnse", "vcbs"):
+        from .mcp_client import StockMCPClient
+
+        client = StockMCPClient(provider=source_lower)
+        return client.fetch_stock_candles(symbol, start, end)
+
+    if source_lower == "auto":
+        from .mcp_auth import get_token
+        from .mcp_client import MultiProviderMCPClient
+
+        if any(get_token(p) for p in ("ssi", "dnse", "vcbs")):
+            try:
+                coordinator = MultiProviderMCPClient()
+                return coordinator.fetch_stock_candles(symbol, start, end)
+            except Exception as exc:
+                log.info("MCP tải %s không thành công (%s), chuyển sang VCI vnstock", symbol, exc)
+
+    return _fetch_remote(symbol, start, end)
+
+
 def load_ohlcv(
     symbol: str,
     start: str = DATA_START,
     end: str | None = None,
     policy: CachePolicy | None = None,
+    source: str = "auto",
 ) -> pd.DataFrame:
-    """Đọc OHLCV từ cache, tải mới nếu cache thiếu hoặc đã cũ."""
+    """Đọc OHLCV từ cache, tải mới nếu cache thiếu hoặc đã cũ.
+
+    Tham số `source`:
+      - 'auto': Ưu tiên các máy chủ MCP (SSI, DNSE, VCBS) nếu có token xác thực;
+                tự động fallback sang VCI (vnstock) nếu không có hoặc lỗi.
+      - 'ssi' | 'dnse' | 'vcbs': Gọi chỉ định qua máy chủ MCP tương ứng.
+      - 'vci': Tải trực tiếp qua vnstock VCI.
+    """
     policy = policy or CachePolicy()
     path = _cache_path(symbol, start)
 
-    if path.exists() and not policy.refresh:
-        age_days = (time.time() - path.stat().st_mtime) / 86400.0
-        if age_days <= policy.max_age_days:
-            df = read_gzip_csv(path)
-            df["time"] = pd.to_datetime(df["time"])
-            return _apply_end(df, end)
+    if not policy.refresh and policy.is_fresh(path):
+        df = read_gzip_csv(path)
+        df["time"] = pd.to_datetime(df["time"])
+        return _apply_end(df, end)
 
     try:
-        df = _fetch_remote(symbol, start, end)
+        df = _fetch_with_source(symbol, start, end, source=source)
     except DataFetchInterrupted:
         raise
     except RuntimeError:
@@ -220,6 +332,7 @@ def load_many(
     start: str = DATA_START,
     end: str | None = None,
     policy: CachePolicy | None = None,
+    source: str = "auto",
 ) -> dict[str, pd.DataFrame]:
     """Tải tuần tự nhiều mã.
 
@@ -231,7 +344,7 @@ def load_many(
     out: dict[str, pd.DataFrame] = {}
     for i, sym in enumerate(symbols, 1):
         try:
-            df = load_ohlcv(sym, start=start, end=end, policy=policy)
+            df = load_ohlcv(sym, start=start, end=end, policy=policy, source=source)
             if len(df) < 120:
                 log.warning("%s: chỉ có %d phiên, bỏ qua", sym, len(df))
             else:

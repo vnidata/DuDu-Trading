@@ -19,7 +19,13 @@
       <span class="tag">Donchian Breakout (Turtle S2) × Genetic Algorithm — VN100</span>
     </div>
     <div class="top-meta" id="topMeta">
-      <span><b>Dữ liệu</b> <span id="metaSource">vnstock · VCI</span></span>
+      <span class="live-status-pill" id="livePill" title="Tự động đồng bộ mỗi 5 phút">
+        <span class="pulse-dot"></span>
+        <span id="liveStatusText">Live</span>
+        <b id="liveCountdown">05:00</b>
+      </span>
+      <button id="btnManualRefresh" class="btn-refresh" title="Làm mới dữ liệu ngay">🔄</button>
+      <span><b>Dữ liệu</b> <span id="metaSource">VNDirect · DChart</span></span>
       <span><b>Universe</b> <span id="metaUniverse">—</span></span>
       <span><b>Kỳ</b> <span id="metaRange">—</span></span>
       <span><b>Cập nhật</b> <span id="metaUpdated">—</span></span>
@@ -46,6 +52,54 @@
 
     <!-- ================= TỔNG QUAN ================= -->
     <section class="tab active" id="tab-overview">
+      <div class="session-header-row">
+        <h2>Phiên giao dịch <span id="snapBadge"></span></h2>
+        <div class="session-poll-status" id="sessionPollStatus">
+          <span class="badge muted" id="snapNextRefresh">Làm mới sau: 05:00</span>
+        </div>
+      </div>
+      <div id="snapWarn"></div>
+      <div class="grid c4" id="snapKpi"></div>
+      <p class="note" id="snapNote"></p>
+
+      <div class="grid c2" style="margin-top:14px">
+        <div class="card">
+          <h3>Diễn biến trong ngày (lịch sử ảnh chụp)</h3>
+          <div class="chart-wrap sm"><canvas id="chartSnapIntraday"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Tín hiệu vào lệnh đang hiện hành</h3>
+          <div class="table-scroll sm">
+            <table class="data" id="snapEntry">
+              <thead><tr><th>Mã</th><th>Giá</th><th>%</th><th>GTGD (tỷ)</th><th>Cách đỉnh 55</th><th>Unit</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="note" id="snapEntryNote"></p>
+        </div>
+      </div>
+
+      <div class="grid c2" style="margin-top:14px">
+        <div class="card">
+          <h3>Dẫn dắt thanh khoản</h3>
+          <div class="table-scroll sm">
+            <table class="data" id="snapTurnover">
+              <thead><tr><th>Mã</th><th>GTGD (tỷ)</th><th>ADV20 (tỷ)</th><th>Đạt ADV</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Tăng / giảm mạnh nhất</h3>
+          <div class="table-scroll sm">
+            <table class="data" id="snapMovers">
+              <thead><tr><th>Mã</th><th>Giá</th><th>%</th><th>Trần/sàn</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <h2>Tóm tắt điều hành</h2>
       <div class="grid c4" id="kpiRow"></div>
 
