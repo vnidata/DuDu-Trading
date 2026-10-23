@@ -195,6 +195,54 @@ def build_snapshot(
             sma200 = float(np.mean(b[-200:]))
             bench_info.update(sma200=round(sma200, 2), above_sma200=bool(b[-1] > sma200))
 
+    # Tích hợp đánh giá từ Hội Đồng Đa Chuyên Gia AI (Multi-Advisor AI Council)
+    advisors_eval: dict[str, Any] = {}
+    trade_kpis: dict[str, Any] = {}
+    try:
+        from .advisors import AdvisorCouncil
+        from .execution import LedgerManager
+        from pathlib import Path
+
+        # 1. Đánh giá vũ trụ cổ phiếu qua Hội Đồng AI
+        council = AdvisorCouncil()
+        symbol_dfs: dict[str, pd.DataFrame] = {}
+        # Lấy tối đa 120 phiên gần nhất cho mỗi mã
+        n_bars = min(120, n)
+        recent_dates = panel.dates[-n_bars:]
+        for j, sym in enumerate(panel.symbols):
+            c_s = panel.close[-n_bars:, j]
+            if np.all(np.isnan(c_s)):
+                continue
+            symbol_dfs[sym] = pd.DataFrame(
+                {
+                    "time": recent_dates,
+                    "open": panel.open[-n_bars:, j],
+                    "high": panel.high[-n_bars:, j],
+                    "low": panel.low[-n_bars:, j],
+                    "close": c_s,
+                    "volume": panel.volume[-n_bars:, j],
+                }
+            )
+
+        bench_df = None
+        if bench_close is not None and len(bench_close) >= n_bars:
+            bench_df = pd.DataFrame({
+                "time": recent_dates,
+                "close": bench_close[-n_bars:],
+            })
+
+        advisors_eval = council.evaluate_universe(symbol_dfs, benchmark_df=bench_df)
+
+        # 2. Thống kê KPI Sổ lệnh thực chiến từ ledger
+        hist_p = Path(__file__).resolve().parent.parent / "site" / "data" / "trade_history.json"
+        if not hist_p.exists():
+            hist_p = Path(__file__).resolve().parent.parent / "data" / "trade_history_2025_2026.json"
+        if hist_p.exists():
+            ledger = LedgerManager.from_json(hist_p)
+            trade_kpis = ledger.summary_kpis()
+    except Exception as exc:
+        pass
+
     return {
         "as_of": now.isoformat(timespec="seconds"),
         "as_of_utc": utc_now_iso(),
@@ -244,6 +292,8 @@ def build_snapshot(
             "losers": sorted(rows, key=lambda r: r["change_pct"])[:8],
             "turnover": sorted(rows, key=lambda r: -r["turnover_bn"])[:8],
         },
+        "advisors_evaluation": advisors_eval,
+        "trade_kpis": trade_kpis,
         "symbols": rows,
         "disclaimer": (
             "Trong phiên, giá đóng cửa là giá khớp gần nhất của bar ngày chưa hoàn tất; "

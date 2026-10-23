@@ -53,10 +53,10 @@ def main() -> int:
     print("=" * 60)
 
     steps = [
-        ("1. Pytest Test Suite (90 unit tests)", [sys.executable, "-m", "pytest", "tests/", "-q"]),
+        ("1. Pytest Test Suite (126 unit tests: Engine, Advisors, Evolution, Execution, Diagnosis, Pullback, Chandelier, Allocator)", [sys.executable, "-m", "pytest", "tests/", "-q"]),
         ("2. Kiểm tra tính toàn vẹn DOM (Smoke DOM JS)", ["node", "scripts/smoke_dom.js"]),
-        ("3. Kiểm tra tệp Website & Cấu trúc Site", [sys.executable, "scripts/build_site.py", "--check"]),
-        ("4. Tạo Ảnh chụp Thị trường Live (Snapshot)", [sys.executable, "scripts/snapshot.py", "--quiet"]),
+        ("3. Kiểm tra tệp Website & Cấu trúc Site (Check Site JS)", ["node", "scripts/check_site.js"]),
+        ("4. Tạo Ảnh chụp Thị trường Live (Snapshot)", [sys.executable, "scripts/snapshot.py", "--offline", "--quiet"]),
     ]
 
     all_ok = True

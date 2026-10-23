@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import secrets
+import sys
 import threading
 import time
 import urllib.parse
@@ -85,6 +86,29 @@ def save_tokens(data: dict[str, Any]) -> None:
     TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(TOKEN_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+def set_token(
+    provider: str,
+    access_token: str,
+    refresh_token: str | None = None,
+    expires_in: int = 86400 * 30,
+) -> None:
+    """Lưu token thủ công cho một provider."""
+    provider = provider.lower()
+    all_tokens = load_all_tokens()
+    now = time.time()
+    all_tokens[provider] = {
+        "provider": provider,
+        "access_token": access_token.strip(),
+        "refresh_token": refresh_token.strip() if refresh_token else None,
+        "token_type": "Bearer",
+        "expires_in": expires_in,
+        "expires_at": now + expires_in,
+        "updated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    save_tokens(all_tokens)
+    log.info("Đã lưu token thủ công cho %s", provider.upper())
 
 
 def register_client(provider: str, redirect_uri: str) -> str:
@@ -178,13 +202,7 @@ def refresh_access_token(provider: str, refresh_token: str, client_id: str) -> d
 
 
 def get_token(provider: str) -> str | None:
-    """Lấy access_token hợp lệ cho một provider.
-
-    Kiểm tra theo thứ tự:
-    1. Biến môi trường: `SSI_MCP_TOKEN`, `DNSE_MCP_TOKEN`, `VCBS_MCP_TOKEN`
-    2. Tệp `data/mcp_tokens.json` (tự động làm mới nếu hết hạn và có refresh_token)
-    3. Thư mục cache `mcp-remote`
-    """
+    """Lấy access_token hợp lệ cho một provider."""
     env_var = f"{provider.upper()}_MCP_TOKEN"
     if os.getenv(env_var):
         return os.getenv(env_var)
@@ -192,7 +210,6 @@ def get_token(provider: str) -> str | None:
     all_tokens = load_all_tokens()
     entry = all_tokens.get(provider)
     if not entry:
-        # Thử tìm trong thư mục mcp-remote
         remote_tok = _find_mcp_remote_token(provider)
         if remote_tok:
             return remote_tok
@@ -203,12 +220,10 @@ def get_token(provider: str) -> str | None:
     refresh_tok = entry.get("refresh_token")
     client_id = entry.get("client_id")
 
-    # Kiểm tra xem token còn hạn không (trừ hao 60s)
     now = time.time()
     if access_token and (expires_at == 0 or expires_at - now > 60):
         return access_token
 
-    # Thử refresh nếu có
     if refresh_tok and client_id:
         try:
             log.info("Làm mới access token cho %s...", provider)
@@ -321,20 +336,22 @@ def interactive_login(provider: str, port: int = 8080) -> dict[str, Any]:
                 self.end_headers()
 
         def log_message(self, format: str, *args: Any) -> None:
-            return  # Tắt log HTTP server console
+            return
 
     server = HTTPServer(("localhost", port), CallbackHandler)
-    server.timeout = 180.0  # Chờ người dùng đăng nhập tối đa 3 phút
+    server.timeout = 180.0
 
-    print(f"\n========================================================")
-    print(f"XÁC THỰC MCP CHO {meta['name'].upper()}")
-    print(f"Trình duyệt sẽ tự động mở liên kết đăng nhập:")
-    print(f"{auth_url}")
-    print(f"========================================================\n")
+    print(f"\n========================================================", flush=True)
+    print(f"XÁC THỰC MCP CHO {meta['name'].upper()}", flush=True)
+    print(f"Liên kết đăng nhập:", flush=True)
+    print(f"{auth_url}", flush=True)
+    print(f"========================================================\n", flush=True)
 
-    webbrowser.open(auth_url)
+    try:
+        webbrowser.open(auth_url)
+    except Exception as e:
+        log.warning("Không thể tự động mở trình duyệt: %s", e)
 
-    # Đón request callback
     while not received_code and not received_error:
         server.handle_request()
 

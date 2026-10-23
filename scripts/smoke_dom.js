@@ -67,7 +67,7 @@ const tabButtons = ["overview", "symbols", "ga", "walkforward", "portfolio", "co
   b.dataset.tab = t;
   return b;
 });
-const tabSections = ["overview", "symbols", "ga", "walkforward", "portfolio", "constraints", "method"].map((t) => new El("section", "tab-" + t));
+const tabSections = ["overview", "advisors", "trades", "symbols", "ga", "walkforward", "portfolio", "constraints", "method"].map((t) => new El("section", "tab-" + t));
 const chartWraps = [...html.matchAll(/chart-wrap/g)].map(() => new El("div"));
 
 const document = {
@@ -149,7 +149,7 @@ async function main() {
 
   check("Không có cảnh báo nạp dữ liệu", warnings.length === 0, warnings.slice(0, 3).join(" | "));
   check("Không có lỗi console", errors.length === 0, errors.slice(0, 3).join(" | "));
-  check("Đã gọi fetch cho đủ 11 tệp dữ liệu", fetchLog.length >= 11, `${fetchLog.length} lời gọi`);
+  check("Đã gọi fetch cho đủ 11 tệp dữ liệu", fetchLog.length >= 13, `${fetchLog.length} lời gọi`);
   check("Đã khởi tạo biểu đồ", chartsCreated.length >= 11, `${chartsCreated.length} biểu đồ`);
 
   const expectFilled = [

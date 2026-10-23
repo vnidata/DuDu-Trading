@@ -28,3 +28,8 @@ desktop.ini
 
 # OneDrive
 *.tmp
+
+# Bảo mật / Token xác thực
+data/mcp_tokens.json
+data/*.token
+*.token.json

@@ -35,6 +35,8 @@ REQUIRED_DATA = [
     "liquidity.json",
     "snapshot.json",
     "snapshot_history.json",
+    "trade_history.json",
+    "advisors_summary.json",
 ]
 REQUIRED_ASSETS = ["index.html", "assets/app.js", "assets/styles.css"]
 

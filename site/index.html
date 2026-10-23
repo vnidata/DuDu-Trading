@@ -33,6 +33,8 @@
   </div>
   <nav class="tabs" id="tabs">
     <button data-tab="overview" class="active">Tổng quan</button>
+    <button data-tab="advisors">Hội đồng AI</button>
+    <button data-tab="trades">Sổ lệnh thực chiến</button>
     <button data-tab="symbols">Kết quả theo mã</button>
     <button data-tab="ga">Tối ưu GA</button>
     <button data-tab="walkforward">Walk-forward</button>
@@ -389,8 +391,128 @@
       <div id="methodLimits"></div>
     </section>
 
+    <!-- ================= HỘI ĐỒNG AI ADVISORS ================= -->
+    <section class="tab" id="tab-advisors">
+      <div id="advisorRegimeBanner"></div>
+
+      <h2>Hội đồng 6 Chuyên gia AI Quản lý Danh mục</h2>
+      <p class="note">Mỗi Chuyên gia AI vận hành một bộ gene trọng số định lượng độc lập, phù hợp với từng khẩu vị rủi ro và chu kỳ tái cấu trúc.</p>
+      <div class="grid c3" id="advisorsGrid"></div>
+
+      <h2 style="margin-top:24px">Hiệu suất Kiểm định 15 Năm (2010 – 2025)</h2>
+      <div class="card">
+        <div class="table-scroll sm">
+          <table class="data" id="advisorsPerfTable">
+            <thead><tr><th>Chuyên gia AI</th><th>CAGR</th><th>Alpha / năm</th><th>Sharpe</th><th>Win Rate</th><th>Profit Factor</th><th>MaxDD</th><th>Vòng quay</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid c2" style="margin-top:20px">
+        <div class="card">
+          <h3>Đồng thuận Toàn Hội Đồng (Consensus Top Picks)</h3>
+          <div class="table-scroll sm">
+            <table class="data" id="councilConsensusTable">
+              <thead><tr><th>Mã CP</th><th>Điểm đồng thuận</th><th>Số phiếu ủng hộ</th><th>Hành động</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Top 5 Khuyến nghị hôm nay theo từng Chuyên gia</h3>
+          <div id="advisorsTopPicksList" style="font-size:13.5px; line-height:1.8"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SỔ LỆNH THỰC CHIẾN ================= -->
+    <section class="tab" id="tab-trades">
+      <h2>Sổ lệnh Thực chiến &amp; Hiệu suất Giao dịch (2025 – Nay)</h2>
+      <p class="note">Dữ liệu ghi nhận từ hệ thống giao dịch Swing định lượng V-DBO trên sàn HOSE (NAV gốc 1.0 tỷ VND).</p>
+      
+      <div class="grid c4" id="tradesKpiGrid"></div>
+
+      <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div class="btn-filter-group" id="tradesFilterBtns">
+          <button class="btn-pill active" data-filter="ALL">Tất cả (<span id="cntAll">110</span>)</button>
+          <button class="btn-pill" data-filter="OPEN">Đang mở (<span id="cntOpen">3</span>)</button>
+          <button class="btn-pill" data-filter="WIN">Lệnh lãi (<span id="cntWin">32</span>)</button>
+          <button class="btn-pill" data-filter="LOSS">Lệnh lỗ (<span id="cntLoss">75</span>)</button>
+        </div>
+        <div>
+          <input type="text" id="tradeSearchInput" placeholder="🔍 Tìm mã cổ phiếu..." style="background:var(--panel); border:1px solid var(--line); color:var(--text); padding:6px 12px; border-radius:6px; font-size:13px;" />
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:10px">
+        <div class="table-scroll">
+          <table class="data" id="tradesDataTable">
+            <thead><tr><th>Mã Lệnh</th><th>Mã CP</th><th>Ngày Vào ➔ Ra</th><th>Giá Vốn</th><th>Giá Ra</th><th>Khối lượng</th><th>Lợi nhuận</th><th>Lãi/Lỗ VND</th><th>Thời gian</th><th>Lý do thoát</th><th>Copy</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
   </div>
 </main>
+
+<!-- Modal Chẩn Đoán Sức Khỏe Cổ Phiếu 360 Độ -->
+<div id="stockDoctorModal" class="modal-overlay" style="display:none">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>🏥 Bác Sĩ Định Lượng: Khám Sức Khỏe <span id="diagSymbol" style="color:var(--accent-2)">—</span></h3>
+      <button class="modal-close" id="btnModalClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="diagVerdictBanner" class="verdict-banner"></div>
+
+      <div class="diagnosis-grid">
+        <div class="diagnosis-box">
+          <div class="lbl">Giá hiện tại</div>
+          <div class="val" id="diagPrice">—</div>
+        </div>
+        <div class="diagnosis-box">
+          <div class="lbl">% Thay đổi</div>
+          <div class="val" id="diagChange">—</div>
+        </div>
+        <div class="diagnosis-box">
+          <div class="lbl">Sức mạnh giá (RS)</div>
+          <div class="val" id="diagRs">—</div>
+        </div>
+        <div class="diagnosis-box">
+          <div class="lbl">Động lượng RSI(14)</div>
+          <div class="val" id="diagRsi">—</div>
+        </div>
+        <div class="diagnosis-box">
+          <div class="lbl">Dòng tiền (Vol/SMA20)</div>
+          <div class="val" id="diagVol">—</div>
+        </div>
+        <div class="diagnosis-box">
+          <div class="lbl">Kênh Donchian 55</div>
+          <div class="val" id="diagDonchian">—</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <h4 style="margin:0 0 8px 0; font-size:14px;">Ý kiến Đánh giá từ Hội Đồng 6 Chuyên Gia AI</h4>
+        <div id="diagAdvisorOpinions" class="grid c3" style="gap:8px; font-size:12.5px;"></div>
+      </div>
+
+      <div class="grid c2" style="gap:14px">
+        <div class="card" style="margin:0">
+          <h4 style="margin:0 0 6px 0; font-size:13px; color:var(--pos);">✅ Điểm mạnh kỹ thuật</h4>
+          <ul id="diagStrengths" style="margin:0; padding-left:18px; font-size:12.5px; color:var(--text-dim);"></ul>
+        </div>
+        <div class="card" style="margin:0">
+          <h4 style="margin:0 0 6px 0; font-size:13px; color:var(--neg);">⚠️ Cảnh báo rủi ro</h4>
+          <ul id="diagWarnings" style="margin:0; padding-left:18px; font-size:12.5px; color:var(--text-dim);"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <footer>
   <div id="footerText">

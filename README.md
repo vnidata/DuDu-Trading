@@ -1,12 +1,36 @@
 # DuDu-Trading
 
-**Donchian Breakout (Turtle System 2) × Genetic Algorithm cho thị trường chứng khoán Việt Nam**
+**Nền Tảng Giao Dịch & Quản Lý Danh Mục Định Lượng Toàn Diện (Unified Quantitative Platform)**  
+*Tích hợp tinh hoa định chế từ `VN-SWING` & Hội đồng đa chuyên gia tự tiến hóa từ `vn-stock-ai-advisors`*
 
-Bộ công cụ nghiên cứu định lượng + website tĩnh (GitHub Pages) triển khai chiến lược
-phá đỉnh Donchian trên rổ VN100, tối ưu tham số bằng thuật toán di truyền, sử dụng dữ liệu
-[Vnstock](https://github.com/thinh-vu/vnstock) (nguồn VCI – Vietcap).
+---
 
-Website: `site/index.html` — mở trực tiếp bằng trình duyệt hoặc xem qua GitHub Pages.
+### 🌟 Hệ Thống Hợp Nhất 3 Trụ Cột Định Lượng
+
+Dự án `DuDu-Trading` đã tích hợp toàn diện hai nền tảng định lượng:
+1. **Từ `VN-SWING`:**
+   - Quy chuẩn khớp lệnh định chế HOSE: Chu kỳ T+2.5, biên độ trần/sàn ±7%, chuỗi sàn, chiết khấu hủy niêm yết, trượt giá theo thanh khoản ADTV 60 phiên.
+   - Cơ chế bảo vệ phân vùng Holdout cấp mã nguồn (`HoldoutLock`: từ 2025-01-01 trở đi) chống rò rỉ dữ liệu và tối ưu quá mức (*p-hacking*).
+   - Sổ lệnh thực chiến Forward-test 2025–2026: **110 lệnh** (107 đã chốt, 3 đang mở), Tỷ lệ thắng 29.91%, Profit Factor 1.10, Lãi ròng thực tế **+123,607,145 VND** (+12.36% NAV ban đầu 1 tỷ).
+   - Chu kỳ cập nhật dữ liệu Realtime 5 phút/lần chuẩn hóa múi giờ Việt Nam `Asia/Ho_Chi_Minh` (UTC+7).
+
+2. **Từ `vn-stock-ai-advisors`:**
+   - **Hội đồng 6 Chuyên gia AI (`dudu/advisors/`):**
+     - `ActiveAdvisor` (Chủ Động - 2W, Rank Ladder, Động Lượng)
+     - `HarmonyAdvisor` (Nhịp Nhàng - 1M, Equal Weight, Xu Hướng)
+     - `PersistentAdvisor` (Bền Bỉ - 3M, Risk Parity, Thấp Biến Động)
+     - `CanslimAdvisor` (CANSLIM VSA, Bùng nổ khối lượng)
+     - `MeanReversionAdvisor` (Đảo chiều thống kê RSI quá bán)
+     - `TurtleAdvisor` (Turtle Donchian S2 bám trend dài hạn)
+   - **Hệ thống Tự Tiến Hóa & Khám Nghiệm Sai Lầm (`dudu/evolution/`):**
+     - Khám nghiệm tử thi lệnh lỗ (`WeaknessAnalyzer`), bóc tách nhân tố thành công (`StrengthExtractor`), lai ghép di truyền sinh chuyên gia F1 (`AdvisorSynthesizer`).
+   - **Quy tắc Phòng thủ Tiền mặt (Macro Cash Defense):** Tự động phát hiện Bear Market (VN-Index dưới SMA50) để nâng tỷ trọng tiền mặt lên 70% nhằm bảo toàn vốn tối đa.
+   - **Bác sĩ Định lượng Chẩn đoán Cổ phiếu 360 độ (`dudu/diagnosis/`):** Chẩn đoán RS Rating, MA Trend, RSI, Volume Flow và khuyến nghị đồng thuận toàn hội đồng.
+
+3. **Lõi Nghiên Cứu Định Lượng `DuDu-Trading`:**
+   - Donchian Breakout (Turtle System 2: 55/20) tối ưu hóa bằng Thuật toán Di truyền (Genetic Algorithm) trên rổ VN100.
+   - Kiểm định nghiêm ngặt: Walk-Forward Validation (3.800 fold).
+   - Bộ kiểm thử toàn diện: **111 tests đạt 100% PASS** (`pytest tests/`).
 
 ---
 

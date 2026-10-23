@@ -48,13 +48,41 @@ class StockMCPClient:
         self._id_counter = 0
         self._lock = threading.Lock()
         self._initialized = False
+        self.session_id: str | None = None
 
     def _next_id(self) -> int:
         with self._lock:
             self._id_counter += 1
             return self._id_counter
 
-    def send_request(self, method: str, params: dict[str, Any] | None = None) -> Any:
+    @staticmethod
+    def _parse_json_or_sse(raw_body: str) -> dict[str, Any]:
+        """Phân tích phản hồi từ máy chủ MCP, hỗ trợ cả JSON thuần và SSE stream (text/event-stream)."""
+        stripped = raw_body.strip()
+        if not stripped:
+            return {}
+        if stripped.startswith("{") or stripped.startswith("["):
+            return json.loads(stripped)
+
+        data_chunks: list[str] = []
+        for line in raw_body.splitlines():
+            line_str = line.strip()
+            if line_str.startswith("data:"):
+                payload = line_str[5:].strip()
+                if payload:
+                    data_chunks.append(payload)
+
+        if data_chunks:
+            return json.loads("\n".join(data_chunks))
+
+        return json.loads(stripped)
+
+    def send_request(
+        self,
+        method: str,
+        params: dict[str, Any] | None = None,
+        is_notification: bool = False,
+    ) -> Any:
         """Gửi request JSON-RPC 2.0 tới MCP Server."""
         inject_truststore()
         token = get_token(self.provider)
@@ -66,23 +94,30 @@ class StockMCPClient:
         }
         if token:
             headers["Authorization"] = f"Bearer {token}"
+        if self.session_id:
+            headers["Mcp-Session-Id"] = self.session_id
 
-        payload = {
+        payload: dict[str, Any] = {
             "jsonrpc": "2.0",
-            "id": self._next_id(),
             "method": method,
             "params": params or {},
         }
-        data = json.dumps(payload).encode("utf-8")
+        if not is_notification:
+            payload["id"] = self._next_id()
 
+        data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(self.url, data=data, headers=headers, method="POST")
 
         try:
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                if "Mcp-Session-Id" in resp.headers:
+                    self.session_id = resp.headers["Mcp-Session-Id"]
+                if resp.status in (202, 204):
+                    return {}
                 raw_body = resp.read().decode("utf-8", errors="replace")
                 if not raw_body.strip():
                     return {}
-                res = json.loads(raw_body)
+                res = self._parse_json_or_sse(raw_body)
                 if "error" in res:
                     err = res["error"]
                     raise MCPError(f"[{self.provider}] Lỗi {err.get('code')}: {err.get('message')}")
@@ -111,6 +146,11 @@ class StockMCPClient:
                 "clientInfo": {"name": "DuDu-Trading", "version": "1.0.0"},
             },
         )
+        # Bắt buộc gửi notification initialized theo chuẩn MCP
+        try:
+            self.send_request("notifications/initialized", {}, is_notification=True)
+        except Exception as e:
+            log.debug("notifications/initialized notice: %s", e)
         self._initialized = True
         return res
 
@@ -163,27 +203,56 @@ class StockMCPClient:
         tools = self.list_tools()
         tool_names = [t.get("name", "") for t in tools]
 
-        # Tìm tool phù hợp theo provider
         raw_result = None
 
         if self.provider == "ssi":
-            # SSI hỗ trợ các tool dạng marketdata_get_stock_history hoặc tương tự
-            matched = [t for t in tool_names if "stock_history" in t or "history" in t or "price" in t]
-            chosen_tool = matched[0] if matched else "marketdata_get_stock_history"
-            args: dict[str, Any] = {"symbol": symbol, "from_date": start}
+            chosen_tool = "marketdata_list_stock_daily_data"
+            all_records = []
+            page_index = 1
+            page_size = 200
+            to_date_str = ""
             if end:
-                args["to_date"] = end
-            if "resolution" in str(tools):
-                args["resolution"] = resolution
-            raw_result = self.call_tool(chosen_tool, args)
+                try:
+                    dt = pd.to_datetime(end)
+                    to_date_str = dt.strftime("%d/%m/%Y")
+                except Exception:
+                    to_date_str = str(end)
+
+            while True:
+                args: dict[str, Any] = {
+                    "symbol": symbol,
+                    "range": "max_range",
+                    "pageSize": page_size,
+                    "pageIndex": page_index,
+                }
+                if to_date_str:
+                    args["toDate"] = to_date_str
+
+                res = self.call_tool(chosen_tool, args)
+                stocks = []
+                if isinstance(res, dict):
+                    data_obj = res.get("data", res)
+                    if isinstance(data_obj, dict):
+                        stocks = data_obj.get("stocks", [])
+                    elif isinstance(data_obj, list):
+                        stocks = data_obj
+
+                if not stocks:
+                    break
+
+                all_records.extend(stocks)
+                if len(stocks) < page_size:
+                    break
+
+                page_index += 1
+                if page_index > 15:
+                    break
+
+            raw_result = all_records
 
         elif self.provider == "dnse":
-            matched = [t for t in tool_names if "history" in t or "ohlcv" in t or "candle" in t]
-            chosen_tool = matched[0] if matched else "get_ohlcv"
-            args = {"symbol": symbol, "start_date": start}
-            if end:
-                args["end_date"] = end
-            raw_result = self.call_tool(chosen_tool, args)
+            res = self.call_tool("price_get_history", {"symbol": symbol})
+            raw_result = res
 
         elif self.provider == "vcbs":
             matched = [t for t in tool_names if "history" in t or "price" in t or "quote" in t]
@@ -193,24 +262,53 @@ class StockMCPClient:
                 args["end_date"] = end
             raw_result = self.call_tool(chosen_tool, args)
 
-        return self._parse_to_ohlcv_dataframe(raw_result, symbol)
+        df = self._parse_to_ohlcv_dataframe(raw_result, symbol)
+        if start and len(df) > 0:
+            df = df[df["time"] >= pd.Timestamp(start)].reset_index(drop=True)
+        return df
+
+    def fetch_index_candles(self, index_code: str = "VNINDEX", range_str: str = "max_range") -> pd.DataFrame:
+        """Tải dữ liệu chỉ số thị trường (VNINDEX, VN30, HNX30)."""
+        res = self.call_tool("marketdata_list_index_daily_data", {
+            "indexCode": index_code.upper(),
+            "range": range_str,
+        })
+        return self._parse_to_ohlcv_dataframe(res, index_code)
 
     def _parse_to_ohlcv_dataframe(self, raw_data: Any, symbol: str) -> pd.DataFrame:
         """Chuẩn hoá dữ liệu thô từ MCP thành DataFrame chuẩn của DuDu-Trading."""
         if raw_data is None:
             raise ValueError(f"Dữ liệu trả về rỗng cho {symbol}")
 
-        # Trường hợp raw_data là dict chứa data/items/records
         records: list[dict[str, Any]] = []
         if isinstance(raw_data, list):
             records = raw_data
         elif isinstance(raw_data, dict):
-            for key in ("data", "items", "records", "candles", "quotes", "history"):
-                if key in raw_data and isinstance(raw_data[key], list):
-                    records = raw_data[key]
-                    break
+            data_obj = raw_data.get("data", raw_data)
+            # Kiểm tra định dạng TradingView UDF (c, t, o, h, l, v)
+            if isinstance(data_obj, dict) and all(k in data_obj for k in ("c", "t", "o", "h", "l")):
+                t_col = pd.to_datetime(data_obj["t"], unit="s" if max(data_obj["t"]) < 1e11 else "ms").tz_localize(None).normalize()
+                df = pd.DataFrame({
+                    "time": t_col,
+                    "open": data_obj["o"],
+                    "high": data_obj["h"],
+                    "low": data_obj["l"],
+                    "close": data_obj["c"],
+                    "volume": data_obj.get("v", [0.0] * len(data_obj["c"])),
+                })
+                return self._normalize_columns(df, symbol)
+
+            if isinstance(data_obj, dict):
+                for subkey in ("stocks", "indices", "items", "records"):
+                    if subkey in data_obj and isinstance(data_obj[subkey], list):
+                        records = data_obj[subkey]
+                        break
+            if not records:
+                for key in ("data", "items", "records", "candles", "quotes", "history", "stocks", "indices"):
+                    if key in raw_data and isinstance(raw_data[key], list):
+                        records = raw_data[key]
+                        break
             if not records and "time" in raw_data:
-                # Định dạng nén dạng dict of lists: {"time": [...], "open": [...]}
                 df = pd.DataFrame(raw_data)
                 return self._normalize_columns(df, symbol)
 
@@ -232,8 +330,9 @@ class StockMCPClient:
         out = df.copy()
         # Ánh xạ các biến thể tên cột về tên chuẩn
         col_map = {
-            "date": "time",
+            "trading_date": "time",
             "tradingdate": "time",
+            "date": "time",
             "datetime": "time",
             "t": "time",
             "o": "open",
@@ -257,7 +356,7 @@ class StockMCPClient:
                 raise ValueError(f"{symbol}: thiếu cột bắt buộc '{col}' (các cột hiện có: {list(out.columns)})")
 
         out = out[OHLCV_COLUMNS].copy()
-        out["time"] = pd.to_datetime(out["time"]).dt.tz_localize(None).dt.normalize()
+        out["time"] = pd.to_datetime(out["time"], dayfirst=True, format="mixed").dt.tz_localize(None).dt.normalize()
         for col in ("open", "high", "low", "close", "volume"):
             out[col] = pd.to_numeric(out[col], errors="coerce")
 
