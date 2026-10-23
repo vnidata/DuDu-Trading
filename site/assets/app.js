@@ -1160,6 +1160,7 @@ function renderAdvisors() {
     { key: "AI_Advisor_CANSLIM_Breakout", name: "CANSLIM VSA", badge: "Tăng Trưởng", cycle: "2 tuần (10 phiên)", alloc: "Rank Ladder (30-10%)", desc: "Săn tìm siêu cổ phiếu vượt đỉnh có thanh khoản bùng nổ." },
     { key: "AI_Advisor_Mean_Reversion", name: "Đảo Chiều Thống Kê", badge: "Bắt Đáy RSI", cycle: "20 phiên", alloc: "Equal Weight (20%)", desc: "Đón đầu nhịp phục hồi kỹ thuật từ vùng quá bán sâu (RSI < 35)." },
     { key: "AI_Advisor_Turtle_Donchian", name: "Turtle Donchian S2", badge: "Quán Quân DuDu", cycle: "20 phiên", alloc: "Equal Weight (20%)", desc: "Chiến lược lõi của DuDu: Donchian 55/20 breakout bám trend dài hạn." },
+    { key: "Pullback_Retest", name: "Kéo Ngược (Pullback)", badge: "Điểm Vào Tối Ưu", cycle: "2 tuần (10 phiên)", alloc: "Rank Ladder (30-10%)", desc: "Tối ưu điểm vào lệnh retest hỗ trợ SMA20 khi khối lượng cạn kiệt, nâng tỷ lệ thắng." },
   ];
 
   if (gridEl) {
