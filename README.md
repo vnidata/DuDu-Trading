@@ -27,10 +27,12 @@ Dự án `DuDu-Trading` đã tích hợp toàn diện hai nền tảng định l
    - **Quy tắc Phòng thủ Tiền mặt (Macro Cash Defense):** Tự động phát hiện Bear Market (VN-Index dưới SMA50) để nâng tỷ trọng tiền mặt lên 70% nhằm bảo toàn vốn tối đa.
    - **Bác sĩ Định lượng Chẩn đoán Cổ phiếu 360 độ (`dudu/diagnosis/`):** Chẩn đoán RS Rating, MA Trend, RSI, Volume Flow và khuyến nghị đồng thuận toàn hội đồng.
 
-3. **Lõi Nghiên Cứu Định Lượng `DuDu-Trading`:**
+3. **Lõi Nghiên Cứu Định Lượng & Khuyến Nghị Thực Chiến `DuDu-Trading`:**
    - Donchian Breakout (Turtle System 2: 55/20) tối ưu hóa bằng Thuật toán Di truyền (Genetic Algorithm) trên rổ VN100.
+   - Hội đồng 7 Chuyên gia AI, Điểm vào Kéo ngược (Pullback Retest), Dừng lỗ ATR Động (Chandelier Exit) và Phân bổ Vốn Nghịch đảo Biến động.
+   - Dashboard trực quan hóa với Tab chuyên biệt **🎯 Khuyến nghị Thực chiến** (Đánh giá thị trường, Tín hiệu Mua/Bán/Khóa hòa vốn, Quản trị vị thế, và Khám sức khỏe cổ phiếu 360°).
    - Kiểm định nghiêm ngặt: Walk-Forward Validation (3.800 fold).
-   - Bộ kiểm thử toàn diện: **111 tests đạt 100% PASS** (`pytest tests/`).
+   - Bộ kiểm thử toàn diện: **126 tests đạt 100% PASS** (`pytest tests/`).
 
 ---
 
