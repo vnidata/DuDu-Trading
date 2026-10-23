@@ -72,6 +72,7 @@
         </div>
         <div class="card">
           <h3>Tín hiệu vào lệnh đang hiện hành</h3>
+          <div class="mobile-scroll-hint">👈 Vuốt ngang để xem đủ cột 👉</div>
           <div class="table-scroll sm">
             <table class="data" id="snapEntry">
               <thead><tr><th>Mã</th><th>Giá</th><th>%</th><th>GTGD (tỷ)</th><th>Cách đỉnh 55</th><th>Unit</th></tr></thead>
@@ -85,6 +86,7 @@
       <div class="grid c2" style="margin-top:14px">
         <div class="card">
           <h3>Dẫn dắt thanh khoản</h3>
+          <div class="mobile-scroll-hint">👈 Vuốt ngang để xem đủ cột 👉</div>
           <div class="table-scroll sm">
             <table class="data" id="snapTurnover">
               <thead><tr><th>Mã</th><th>GTGD (tỷ)</th><th>ADV20 (tỷ)</th><th>Đạt ADV</th></tr></thead>
@@ -94,6 +96,7 @@
         </div>
         <div class="card">
           <h3>Tăng / giảm mạnh nhất</h3>
+          <div class="mobile-scroll-hint">👈 Vuốt ngang để xem đủ cột 👉</div>
           <div class="table-scroll sm">
             <table class="data" id="snapMovers">
               <thead><tr><th>Mã</th><th>Giá</th><th>%</th><th>Trần/sàn</th></tr></thead>
@@ -399,12 +402,12 @@
       <h2>Đánh giá Trạng thái Thị trường &amp; Chiến lược Vĩ mô</h2>
       <div class="grid c4" id="recomMarketKpiGrid"></div>
 
-      <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div class="filter-bar-row">
         <div>
           <h2 style="margin:0">🎯 Danh mục Khuyến nghị Mua Mới (<span id="recomBuyCount">0</span> cơ hội)</h2>
           <p class="note" style="margin:2px 0 0 0">Tín hiệu định lượng chọn lọc từ Hội đồng 7 Chuyên gia AI kết hợp mô hình vi cấu trúc sàn HOSE.</p>
         </div>
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <div class="filter-bar-controls">
           <div class="btn-filter-group" id="recomBuyFilters">
             <button class="btn-pill active" data-style="ALL">Tất cả</button>
             <button class="btn-pill" data-style="CONSENSUS">🎯 Đồng thuận cao</button>
@@ -412,13 +415,14 @@
             <button class="btn-pill" data-style="BREAKOUT">🚀 Bùng nổ VSA</button>
             <button class="btn-pill" data-style="MEAN_REV">⚡ Bắt đáy RSI</button>
           </div>
-          <div>
-            <input type="text" id="recomBuySearch" placeholder="🔍 Tìm mã..." style="background:var(--panel); border:1px solid var(--line); color:var(--text); padding:6px 12px; border-radius:6px; font-size:13px; width:130px;" />
+          <div class="search-wrap">
+            <input type="text" id="recomBuySearch" class="search-input" placeholder="🔍 Tìm mã..." />
           </div>
         </div>
       </div>
 
       <div class="card" style="margin-top:12px">
+        <div class="mobile-scroll-hint">👈 Vuốt ngang để xem đủ cột 👉</div>
         <div class="table-scroll">
           <table class="data" id="recomBuyTable">
             <thead>
@@ -444,6 +448,7 @@
       <p class="note">Áp dụng cơ chế Dừng lỗ ATR Động, Khóa hòa vốn (Breakeven) và Chốt lời từng phần 50% theo nguyên lý Chandelier Exit.</p>
       
       <div class="card" style="margin-top:10px">
+        <div class="mobile-scroll-hint">👈 Vuốt ngang để xem đủ cột 👉</div>
         <div class="table-scroll">
           <table class="data" id="recomManageTable">
             <thead>
@@ -497,6 +502,7 @@
 
       <h2 style="margin-top:24px">Hiệu suất Kiểm định 15 Năm (2010 – 2025)</h2>
       <div class="card">
+        <div class="mobile-scroll-hint">👈 Vuốt ngang để xem đủ cột 👉</div>
         <div class="table-scroll sm">
           <table class="data" id="advisorsPerfTable">
             <thead><tr><th>Chuyên gia AI</th><th>CAGR</th><th>Alpha / năm</th><th>Sharpe</th><th>Win Rate</th><th>Profit Factor</th><th>MaxDD</th><th>Vòng quay</th></tr></thead>
@@ -508,6 +514,7 @@
       <div class="grid c2" style="margin-top:20px">
         <div class="card">
           <h3>Đồng thuận Toàn Hội Đồng (Consensus Top Picks)</h3>
+          <div class="mobile-scroll-hint">👈 Vuốt ngang để xem đủ cột 👉</div>
           <div class="table-scroll sm">
             <table class="data" id="councilConsensusTable">
               <thead><tr><th>Mã CP</th><th>Điểm đồng thuận</th><th>Số phiếu ủng hộ</th><th>Hành động</th></tr></thead>
@@ -529,19 +536,20 @@
       
       <div class="grid c4" id="tradesKpiGrid"></div>
 
-      <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div class="filter-bar-row">
         <div class="btn-filter-group" id="tradesFilterBtns">
           <button class="btn-pill active" data-filter="ALL">Tất cả (<span id="cntAll">110</span>)</button>
           <button class="btn-pill" data-filter="OPEN">Đang mở (<span id="cntOpen">3</span>)</button>
           <button class="btn-pill" data-filter="WIN">Lệnh lãi (<span id="cntWin">32</span>)</button>
           <button class="btn-pill" data-filter="LOSS">Lệnh lỗ (<span id="cntLoss">75</span>)</button>
         </div>
-        <div>
-          <input type="text" id="tradeSearchInput" placeholder="🔍 Tìm mã cổ phiếu..." style="background:var(--panel); border:1px solid var(--line); color:var(--text); padding:6px 12px; border-radius:6px; font-size:13px;" />
+        <div class="search-wrap">
+          <input type="text" id="tradeSearchInput" class="search-input" placeholder="🔍 Tìm mã cổ phiếu..." />
         </div>
       </div>
 
       <div class="card" style="margin-top:10px">
+        <div class="mobile-scroll-hint">👈 Vuốt ngang để xem đủ cột 👉</div>
         <div class="table-scroll">
           <table class="data" id="tradesDataTable">
             <thead><tr><th>Mã Lệnh</th><th>Mã CP</th><th>Ngày Vào ➔ Ra</th><th>Giá Vốn</th><th>Giá Ra</th><th>Khối lượng</th><th>Lợi nhuận</th><th>Lãi/Lỗ VND</th><th>Thời gian</th><th>Lý do thoát</th><th>Copy</th></tr></thead>

@@ -1859,6 +1859,7 @@ function initTabs() {
     if (!btn) return;
     document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.toggle("active", b === btn));
     document.querySelectorAll("section.tab").forEach((s) => s.classList.toggle("active", s.id === "tab-" + btn.dataset.tab));
+    btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
     Object.values(state.charts).forEach((c) => c && c.resize());
     window.scrollTo({ top: 0, behavior: "instant" });
   });
