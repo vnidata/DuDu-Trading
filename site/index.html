@@ -33,6 +33,7 @@
   </div>
   <nav class="tabs" id="tabs">
     <button data-tab="overview" class="active">Tổng quan</button>
+    <button data-tab="recommendations">🎯 Khuyến nghị Thực chiến</button>
     <button data-tab="advisors">Hội đồng AI</button>
     <button data-tab="trades">Sổ lệnh thực chiến</button>
     <button data-tab="symbols">Kết quả theo mã</button>
@@ -389,6 +390,101 @@
 
       <h2>Giới hạn phương pháp luận</h2>
       <div id="methodLimits"></div>
+    </section>
+
+    <!-- ================= KHUYẾN NGHỊ THỰC CHIẾN ================= -->
+    <section class="tab" id="tab-recommendations">
+      <div id="recomRegimeBanner"></div>
+
+      <h2>Đánh giá Trạng thái Thị trường &amp; Chiến lược Vĩ mô</h2>
+      <div class="grid c4" id="recomMarketKpiGrid"></div>
+
+      <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h2 style="margin:0">🎯 Danh mục Khuyến nghị Mua Mới (<span id="recomBuyCount">0</span> cơ hội)</h2>
+          <p class="note" style="margin:2px 0 0 0">Tín hiệu định lượng chọn lọc từ Hội đồng 7 Chuyên gia AI kết hợp mô hình vi cấu trúc sàn HOSE.</p>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <div class="btn-filter-group" id="recomBuyFilters">
+            <button class="btn-pill active" data-style="ALL">Tất cả</button>
+            <button class="btn-pill" data-style="CONSENSUS">🎯 Đồng thuận cao</button>
+            <button class="btn-pill" data-style="PULLBACK">🔄 Kéo ngược SMA20</button>
+            <button class="btn-pill" data-style="BREAKOUT">🚀 Bùng nổ VSA</button>
+            <button class="btn-pill" data-style="MEAN_REV">⚡ Bắt đáy RSI</button>
+          </div>
+          <div>
+            <input type="text" id="recomBuySearch" placeholder="🔍 Tìm mã..." style="background:var(--panel); border:1px solid var(--line); color:var(--text); padding:6px 12px; border-radius:6px; font-size:13px; width:130px;" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div class="table-scroll">
+          <table class="data" id="recomBuyTable">
+            <thead>
+              <tr>
+                <th>Mã CP</th>
+                <th>Giá KN</th>
+                <th>Mẫu hình / Chiến lược</th>
+                <th>Đồng thuận AI</th>
+                <th>Dừng lỗ (ATR)</th>
+                <th>Mục tiêu 1</th>
+                <th>Mục tiêu 2</th>
+                <th>R:R</th>
+                <th>Tỷ trọng đề xuất</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <h2 style="margin-top:28px">🛡️ Quản trị Vị thế Đang Mở &amp; Tín hiệu Thoát Lệnh</h2>
+      <p class="note">Áp dụng cơ chế Dừng lỗ ATR Động, Khóa hòa vốn (Breakeven) và Chốt lời từng phần 50% theo nguyên lý Chandelier Exit.</p>
+      
+      <div class="card" style="margin-top:10px">
+        <div class="table-scroll">
+          <table class="data" id="recomManageTable">
+            <thead>
+              <tr>
+                <th>Mã CP</th>
+                <th>Giá vào</th>
+                <th>Giá hiện tại</th>
+                <th>Lãi / Lỗ</th>
+                <th>Số ngày (T+)</th>
+                <th>Stop-Loss Động</th>
+                <th>Khuyến nghị Hành động</th>
+                <th>Lý do kỹ thuật</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <h2 style="margin-top:28px">⏱️ Quy trình Hành động Thực chiến Theo Khung Giờ Sàn HOSE</h2>
+      <div class="card" id="recomProtocol">
+        <div class="grid c4" style="gap:14px;">
+          <div style="border-left:3px solid var(--accent); padding-left:10px;">
+            <b style="color:var(--accent);">09:00 – 09:15 · Phiên ATO</b>
+            <p style="font-size:12.5px; color:var(--text-dim); margin:4px 0 0 0;">Kiểm tra giá dự kiến mở cửa. Tuyệt đối không mua đuổi ATO nếu mở gap tăng trần (+6.8% - 7%). Đặt lệnh chờ với giá sát tham chiếu.</p>
+          </div>
+          <div style="border-left:3px solid var(--pos); padding-left:10px;">
+            <b style="color:var(--pos);">09:15 – 11:30 · Phiên Sáng</b>
+            <p style="font-size:12.5px; color:var(--text-dim); margin:4px 0 0 0;">Quan sát nhịp điều chỉnh kéo ngược (Pullback) quanh SMA20. Nếu khối lượng bán cạn kiệt (Vol &lt; 0.85x TB20), bắt đầu giải ngân 50% vị thế.</p>
+          </div>
+          <div style="border-left:3px solid var(--chart-yellow, #e0af68); padding-left:10px;">
+            <b style="color:var(--chart-yellow, #e0af68);">13:00 – 14:15 · Phiên Chiều</b>
+            <p style="font-size:12.5px; color:var(--text-dim); margin:4px 0 0 0;">Thời điểm dòng tiền lớn gia tăng bùng nổ. Xác nhận nến đóng cửa vững chắc. Gia tăng nốt 50% vị thế còn lại nếu đạt chuẩn Breakout/Retest.</p>
+          </div>
+          <div style="border-left:3px solid var(--neg); padding-left:10px;">
+            <b style="color:var(--neg);">14:15 – 14:45 · ATC &amp; Đóng cửa</b>
+            <p style="font-size:12.5px; color:var(--text-dim); margin:4px 0 0 0;">Rà soát toàn bộ vị thế. Kích hoạt lệnh Bán cắt lỗ nếu nến ngày đóng cửa thủng Stop-loss động. Khóa hòa vốn với các mã lãi &gt; 8%.</p>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- ================= HỘI ĐỒNG AI ADVISORS ================= -->
