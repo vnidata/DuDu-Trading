@@ -1,0 +1,22 @@
+name: Duy trì lịch chạy GitHub Actions (Keep-Alive)
+
+# Chống việc GitHub tự động tạm dừng (disable) các lịch cron của repo
+# sau 60 ngày nếu không có commit mới từ người dùng.
+on:
+  schedule:
+    - cron: "0 0 1 * *"   # Chạy vào ngày 1 hàng tháng
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    name: Keep-Alive
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gautamkrishnar/keepalive-workflow@v2
+        with:
+          committer_username: "dudu-bot"
+          committer_email: "dudu-bot@users.noreply.github.com"

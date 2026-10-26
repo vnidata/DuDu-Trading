@@ -6,6 +6,10 @@ on:
     paths:
       - "site/**"
       - ".github/workflows/pages.yml"
+  workflow_run:
+    workflows: ["Cập nhật dữ liệu tự động 5 phút"]
+    types:
+      - completed
   workflow_dispatch:
 
 permissions:
@@ -15,11 +19,14 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@v4
 
