@@ -260,7 +260,7 @@ def _fetch_with_source(
     end: str | None,
     source: str = "auto",
 ) -> pd.DataFrame:
-    """Tải nến giá từ MCP (SSI, DNSE, VCBS) hoặc vnstock VCI với cơ chế failover."""
+    """Tải nến giá từ VNDirect/VCI hoặc MCP (SSI, DNSE, VCBS) với cơ chế failover."""
     source_lower = source.lower()
     if source_lower in ("ssi", "dnse", "vcbs"):
         from .mcp_client import StockMCPClient
@@ -268,7 +268,20 @@ def _fetch_with_source(
         client = StockMCPClient(provider=source_lower)
         return client.fetch_stock_candles(symbol, start, end)
 
+    if source_lower == "mcp":
+        from .mcp_client import MultiProviderMCPClient
+
+        coordinator = MultiProviderMCPClient()
+        return coordinator.fetch_stock_candles(symbol, start, end)
+
     if source_lower == "auto":
+        # 1. Ưu tiên VNDirect DChart API (siêu tốc ~150ms/mã, có nến realtime hôm nay)
+        try:
+            return _fetch_vndirect(symbol, start, end)
+        except Exception as exc:
+            log.info("%s: VNDirect không khả dụng (%s), chuyển sang MCP/VCI", symbol, exc)
+
+        # 2. Dự phòng MCP nếu có token
         from .mcp_auth import get_token
         from .mcp_client import MultiProviderMCPClient
 
