@@ -2,9 +2,10 @@
 ## Hệ Thống Giao Dịch Định Lượng Hợp Nhất `DuDu-Trading` (Institutional Quant Dossier)
 
 > **Mã tài liệu:** `DUDU-QUANT-DOSSIER-2026-V1`  
-> **Ngày phát hành:** 23/10/2026  
+> **Ngày phát hành:** 23/10/2026 (Cập nhật kiểm toán: 27/10/2026)  
 > **Nền tảng:** `DuDu-Trading` (Kế thừa và hợp nhất tri thức từ `VN-SWING` và `vn-stock-ai-advisors`)  
-> **Không gian mẫu kiểm định:** Toàn bộ cổ phiếu sàn HOSE (638 mã bao gồm cả cổ phiếu hủy niêm yết) & Rổ chỉ số VN100 (2006 – 2026)  
+> **Không gian mẫu kiểm định:** 100 mã thuộc rổ VN100 hiện tại (snapshot tháng 10/2026), áp ngược về quá khứ 2016 – 2026.  
+> **CẢNH BÁO KIỂM TOÁN VỀ MẪU:** Không gian mẫu này mang **Thiên lệch sống sót (Survivorship Bias)** và **Thiên lệch nhìn trước (Look-Ahead Bias)** vì chọn mã dựa trên thành phần hiện tại và loại bỏ sạch các cổ phiếu từng trong VN100 nhưng đã bị hủy niêm yết/suy thoái. Mọi kết quả backtest tại Bảng 3.2 và 3.3 vì vậy **bị thiên lệch lên**, độ lớn thực tế chưa đo lường được cho đến khi kiểm định lại với Universe Point-in-Time.  
 > **Mục đích:** Thiết lập chuẩn mực lý thuyết, công thức toán học, bằng chứng thực nghiệm và nhận diện điểm nghẽn làm cơ sở khoa học để tối ưu hóa chiến lược định lượng.
 
 ---
@@ -89,8 +90,9 @@ $$\text{TR}_t = \max\left( \text{High}_t - \text{Low}_t, \; |\text{High}_t - \te
 $$\text{ATR}_t(n) = \frac{\text{ATR}_{t-1}(n) \times (n - 1) + \text{TR}_t}{n}$$
 
 #### 3. Chỉ Số Vị Trí Đóng Cửa Nến (Close Location Value - CLV)
-Đo lường áp lực mua/bán trong phiên. $CLV \ge 0.50$ chứng minh lực cầu chiếm ưu thế tuyệt đối và giá đóng cửa nằm ở nửa trên thân nến:
+Đo lường vị trí tương quan của giá đóng cửa trong toàn bộ biên độ dao động phiên ($\text{High} - \text{Low}$):
 $$\text{CLV}_t = \frac{(\text{Close}_t - \text{Low}_t) - (\text{High}_t - \text{Close}_t)}{\text{High}_t - \text{Low}_t} = \frac{2 \times \text{Close}_t - (\text{High}_t + \text{Low}_t)}{\text{High}_t - \text{Low}_t} \in [-1.0, \; +1.0]$$
+*Lưu ý toán học chuẩn xác:* $\text{CLV} \ge 0.50 \iff \text{Close} \ge \text{Low} + 0.75 \times (\text{High} - \text{Low})$, tức là giá đóng cửa phải nằm ở **$25\%$ trên cùng của toàn bộ biên độ High–Low** trong ngày (thể hiện phe mua làm chủ hoàn toàn phiên giao dịch), chứ không phải đo theo thân nến.
 
 #### 4. Sức Mạnh Giá Tương Đối (Relative Strength Rating - RS vs VN-Index)
 Đo lường hiệu suất vượt trội của cổ phiếu so với chỉ số tham chiếu VN-Index trong 60 phiên (3 tháng):
@@ -135,7 +137,7 @@ Hệ thống phản ánh chính xác các quy chế thực tế của Sở GDCK 
 | **Biên độ giá trần/sàn $\pm 7\%$** | $P_{\text{ceil}} = \text{floor}(P_{t-1} \times 1.07 / \text{tick}) \times \text{tick}$; $P_{\text{floor}} = \text{ceil}(P_{t-1} \times 0.93 / \text{tick}) \times \text{tick}$.<br/>- **Mở cửa ở trần:** Không thể khớp lệnh mua ATO ($Open_t \ge P_{\text{ceil}} \implies Fill = False$).<br/>- **Mở cửa ở sàn:** Không thể khớp lệnh bán ATO ($Open_t \le P_{\text{floor}} \implies Fill = False$), tiếp tục nắm giữ sang phiên sau. |
 | **Chu kỳ thanh toán $T+2.5$** | Cổ phiếu mua tại phiên $t$ chỉ có thể bán từ phiên $t+3$ (tương đương tối thiểu 3 ngày giao dịch: $\text{Hold\_Days} \ge 3$). Tín hiệu thoát phát sinh trong 2 phiên đầu bị hoãn cưỡng bức. |
 | **Mô hình Thuế & Phí** | Chi phí mua: $c_{\text{buy}} = 0.30\%$ (phí môi giới + trượt giá).<br/>Chi phí bán: $c_{\text{sell}} = 0.40\%$ (phí môi giới + thuế chuyển nhượng $0.1\%$ + trượt giá).<br/>Giá vốn: $Cost = P_{\text{entry}} \times (1 + c_{\text{buy}})$; Tiền thu về: $Net = P_{\text{exit}} \times (1 - c_{\text{sell}})$. |
-| **Chiết khấu Hủy niêm yết** | Khi cổ phiếu bị ngừng giao dịch hoặc hủy niêm yết đột ngột, toàn bộ vị thế bị thanh lý cưỡng bức với mức chiết khấu haircut $50\%$ giá trị: $P_{\text{delist}} = P_{\text{last}} \times (1 - 0.50)$. |
+| **Chiết khấu Hủy niêm yết (Lý thuyết vs Thực thi)** | - **Lý thuyết:** Khi cổ phiếu bị ngừng giao dịch hoặc hủy niêm yết bắt buộc, thanh lý cưỡng bức với mức chiết khấu haircut $50\%$ giá trị: $P_{\text{delist}} = P_{\text{last}} \times (1 - 0.50)$.<br/>- **Thực tế kiểm toán:** Trong engine mô phỏng `dudu/backtest.py` sinh ra Bảng 3.2, quy tắc này **chưa từng được gọi** (hệ thống dùng `_ffill_nan` để giữ nguyên giá phiên trước qua khoảng trống). Quy tắc này chỉ chạy trong bộ sinh sổ lệnh của `vn-swing` và đã gây ra lỗi phạt oan cho 2 mã chuyển sàn (`MCH`, `BVB`). |
 
 ---
 
@@ -154,30 +156,44 @@ Hệ thống cài đặt quy tắc **Macro Cash Defense**:
 
 ## 3. BÁO CÁO HIỆU SUẤT ĐỊNH LƯỢNG ĐA PHÂN KỲ
 
-### 3.1 Phân Kỳ Thực Chiến Forward-Test (01/2025 – 10/2026): 110 Lệnh Thực Tế
+### 3.1 Mô Phỏng Trên Giai Đoạn Holdout (01/2025 – 10/2026): 110 Lệnh Giao Dịch
 
-Hệ thống đã vận hành thử nghiệm thực tế (Forward-Testing) trên tài khoản quy mô chuẩn 1.000.000.000 VND (1.0 tỷ) với 110 lệnh giao dịch ghi nhận trung thực trong sổ lệnh [`data/trade_history_2025_2026.json`](data/trade_history_2025_2026.json):
+> **ĐÍNH CHÍNH BẢN CHẤT KIỂM TOÁN:** Sổ lệnh này được sinh ra từ **mô phỏng trên tập holdout** (tạo ngày `2026-10-12`), **không phải** tài khoản live ghi lệnh thời gian thực. Chiến lược được kiểm thử trong sổ lệnh này là **`V-DBO Trend Focus (VN-SWING)`** ($N_{in}=30, N_{out}=15, k_{\text{stop}}=3.0$, thoát Donchian 15 phiên), **không phải** là bằng chứng thực nghiệm của cấu hình Turtle 55/20 hay các tối ưu hóa Phase 2 (Chandelier 2.8, Pullback, Allocator).
+
+Bảng đối chiếu kết quả mô phỏng gốc và sau khi loại bỏ lỗi haircut chuyển sàn (MCH, BVB):
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│               KẾT QUẢ FORWARD-TEST THỰC TẾ (2025 - 2026)               │
-├────────────────────────┬───────────────────────┬───────────────────────┤
-│ Tổng số lệnh phát sinh │ 110 lệnh              │ 107 đóng · 3 đang mở  │
-│ Tỷ lệ thắng (Win Rate) │ 29.91%                │ 32 thắng · 75 cắt lỗ  │
-│ Hệ số Lời/Lỗ (PF)      │ 1.10                  │ Lãi gánh toàn bộ lỗ   │
-│ Tổng lãi ròng thực tế  │ +123,607,145 VND      │ +12.36% NAV ban đầu   │
-│ Lợi nhuận lệnh thắng TB│ +23.10%               │ Lệnh lỗ bình quân: -9%│
-└────────────────────────┴───────────────────────┴───────────────────────┘
+┌──────────────────────────────────────┬───────────────────────┬───────────────────────┐
+│ CHỈ SỐ KIỂM ĐỊNH HOLDOUT 2025 - 2026 │ THEO SỔ LỆNH GỐC      │ SAU KHI SỬA LỖI CHUYỂN│
+├──────────────────────────────────────┼───────────────────────┼───────────────────────┤
+│ Tổng số lệnh phát sinh               │ 110 lệnh              │ 110 lệnh              │
+│ Lệnh đã chốt / Lệnh đang mở          │ 107 đóng · 3 đang mở  │ 107 đóng · 3 đang mở  │
+│ Tỷ lệ thắng (Win Rate)               │ 29.91% (32/107)       │ 30.84% (33/107)       │
+│ Lãi ròng đã chốt (Realized PnL)      │ +71,807,145 VND       │ +176,014,357 VND      │
+│ Lãi thả nổi 3 vị thế mở (Unrealized) │ +51,800,000 VND       │ +51,800,000 VND       │
+│ Tổng PnL (chốt + thả nổi)            │ +123,607,145 VND      │ +227,814,357 VND      │
+│ % NAV tương đương (vốn ban đầu 1 tỷ) │ +12.36% NAV           │ ≈ +22.78% NAV         │
+│ Profit Factor (tính trên VND)        │ 1.10                  │ 1.265                 │
+│ Kỳ vọng mỗi lệnh (Expectancy)        │ +0.39%                │ +1.38%                │
+│ Hệ số t-stat                         │ 0.18                  │ 0.66 (chưa có ý nghĩa)│
+│ VN-Index cùng kỳ (tham khảo)         │ ≈ +40% (1.267 → 1.770)│ ≈ +40% (Chiến lược thua)│
+└──────────────────────────────────────┴───────────────────────┴───────────────────────┘
 ```
 
-#### Phân Tích Hiện Tượng "Siêu Cổ Phiếu Gánh Lỗ" (Payoff Asymmetry)
+#### Bóc Tách Bản Chất: Sự Phụ Thuộc Cực Đoan Vào "Đuôi Dày" (Fat-Tail Skewness)
 
-Dù tỷ lệ lệnh thắng chỉ đạt **$29.91\%$** (nghĩa là cứ 10 lệnh thì có 7 lệnh phải cắt lỗ), danh mục vẫn đạt mức sinh lời ròng **$+12.36\%$** nhờ 3 siêu cổ phiếu bùng nổ sóng dài:
-1. **VIC (Vingroup):** Lãi ròng **$+108.98\%$** (Vào ngày 15/05/2025, nắm giữ trọn con sóng lớn).
-2. **SBT (Thành Thành Công - Biên Hòa):** Lãi ròng **$+94.67\%$**.
-3. **SHB (Ngân hàng Sài Gòn - Hà Nội):** Lãi ròng **$+81.68\%$**.
+Lợi nhuận dương của toàn bộ giai đoạn mô phỏng 2025–2026 phụ thuộc hoàn toàn vào **3 siêu cổ phiếu bùng nổ**:
+1. **SBT:** Lãi ròng **$+142,083,696$ VND** ($+94.67\%$, nắm giữ 158 phiên).
+2. **VIC:** Lãi ròng **$+133,332,275$ VND** ($+108.98\%$, vào ngày 18/09/2025, thoát 28/01/2026).
+3. **SHB:** Lãi ròng **$+126,755,496$ VND** ($+81.68\%$, nắm giữ 131 phiên).
 
-Tổng lợi nhuận từ 3 mã này đạt hơn **+240 triệu VND**, thừa sức bù đắp cho 75 lệnh cắt lỗ nhỏ (dao động từ $-5\%$ đến $-8\%$) do thị trường rung lắc gây ra.
+- **Tổng lãi ròng từ 3 mã:** **$+402,171,467$ VND**.
+- **104 lệnh còn lại (sau sửa lỗi MCH, BVB):** **Lỗ $-226,171,467$ VND** (tương đương $-22.6\%$ NAV).
+  - Tỷ lệ thắng 104 lệnh còn lại: **$28.8\%$**
+  - Profit Factor còn lại: **$0.66$** (thua lỗ nặng nếu không có Top 3)
+  - Nếu loại bỏ Top 5 mã tốt nhất: Profit Factor tụt xuống **$0.49$**.
+- **Ý nghĩa thống kê:** Với $t\text{-stat} = 0.66$ và khoảng tin cậy bootstrap 95% của kỳ vọng mỗi lệnh là $[-2.4\%, +5.7\%]$, kết quả này **hoàn toàn không thể phân biệt được với may mắn ngẫu nhiên** (bắt trúng 3 cổ phiếu dẫn dắt trong một năm bùng nổ). Để khẳng định hệ thống có Edge dương ở mức tin cậy 95%, cần tối thiểu $\approx 940$ lệnh giao dịch độc lập.
+- **Hiệu suất so với thị trường:** Trong khi VN-Index tăng $\approx 40\%$ (dẫn dắt bởi nhóm trụ Vingroup và Ngân hàng lớn), chiến lược đạt $+22.8\%$ sau sửa là **tụt hậu đáng kể so với chỉ số** do hiện tượng "xanh vỏ đỏ lòng" (độ rộng thị trường phân hóa âm, khiến hệ thống liên tục dính bẫy giả ở nhóm midcap).
 
 ---
 

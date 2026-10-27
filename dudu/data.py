@@ -171,17 +171,13 @@ def _fetch_vndirect(symbol: str, start: str, end: str | None = None, timeout: fl
     """Tải lịch sử OHLCV trực tiếp từ VNDirect DChart API.
 
     Tốc độ cao (<200ms/mã), có nến ngày hiện tại (intraday) theo thời gian thực,
-    bỏ qua xác thực chứng chỉ SSL nếu chạy sau proxy doanh nghiệp, không gặp lỗi
-    rate limit khiến sập tiến trình như thư viện vnstock.
+    xác thực TLS an toàn qua truststore hệ điều hành, không gặp lỗi rate limit.
     """
     import json
-    import ssl
     import urllib.request
     from datetime import datetime
 
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
+    inject_truststore()
 
     start_dt = datetime.fromisoformat(start) if isinstance(start, str) else datetime(2016, 1, 1)
     start_ts = int(start_dt.timestamp())
@@ -200,7 +196,7 @@ def _fetch_vndirect(symbol: str, start: str, end: str | None = None, timeout: fl
         url,
         headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"},
     )
-    with urllib.request.urlopen(req, context=ctx, timeout=timeout) as resp:
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
         payload = json.loads(resp.read().decode("utf-8"))
         if payload.get("s") != "ok" or not payload.get("t"):
             raise ValueError(f"VNDirect không có dữ liệu cho {symbol}")
