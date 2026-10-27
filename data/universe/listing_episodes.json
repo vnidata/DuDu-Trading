@@ -1,0 +1,1010 @@
+[
+  {
+    "security_id": "SEC_ACB",
+    "ticker": "ACB",
+    "exchange": "HOSE",
+    "first_trade_date": "2020-12-09",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_AMD",
+    "ticker": "AMD",
+    "exchange": "HOSE",
+    "first_trade_date": "2015-06-02",
+    "last_trade_date": "2022-12-09",
+    "end_reason": "MANDATORY_DELIST",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_ANV",
+    "ticker": "ANV",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_ATG",
+    "ticker": "ATG",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-08-22",
+    "last_trade_date": "2021-02-18",
+    "end_reason": "MANDATORY_DELIST",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_BAF",
+    "ticker": "BAF",
+    "exchange": "HOSE",
+    "first_trade_date": "2021-12-03",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_BCM",
+    "ticker": "BCM",
+    "exchange": "HOSE",
+    "first_trade_date": "2020-08-31",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_BID",
+    "ticker": "BID",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_BMP",
+    "ticker": "BMP",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_BSI",
+    "ticker": "BSI",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_BSR",
+    "ticker": "BSR",
+    "exchange": "HOSE",
+    "first_trade_date": "2018-03-01",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_BVH",
+    "ticker": "BVH",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_BWE",
+    "ticker": "BWE",
+    "exchange": "HOSE",
+    "first_trade_date": "2017-07-20",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_CDO",
+    "ticker": "CDO",
+    "exchange": "HOSE",
+    "first_trade_date": "2015-03-18",
+    "last_trade_date": "2018-09-21",
+    "end_reason": "MANDATORY_DELIST",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_CII",
+    "ticker": "CII",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_CMG",
+    "ticker": "CMG",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_CTD",
+    "ticker": "CTD",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_CTG",
+    "ticker": "CTG",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_CTR",
+    "ticker": "CTR",
+    "exchange": "HOSE",
+    "first_trade_date": "2022-02-23",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_CTS",
+    "ticker": "CTS",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_DBC",
+    "ticker": "DBC",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_DCM",
+    "ticker": "DCM",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_DGW",
+    "ticker": "DGW",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_DIG",
+    "ticker": "DIG",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_DPM",
+    "ticker": "DPM",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_DSE",
+    "ticker": "DSE",
+    "exchange": "HOSE",
+    "first_trade_date": "2024-07-01",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_DXG",
+    "ticker": "DXG",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_EIB",
+    "ticker": "EIB",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_EVF",
+    "ticker": "EVF",
+    "exchange": "HOSE",
+    "first_trade_date": "2023-12-21",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_FLC",
+    "ticker": "FLC",
+    "exchange": "HOSE",
+    "first_trade_date": "2011-10-05",
+    "last_trade_date": "2022-09-08",
+    "end_reason": "MANDATORY_DELIST",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_FPT",
+    "ticker": "FPT",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_FRT",
+    "ticker": "FRT",
+    "exchange": "HOSE",
+    "first_trade_date": "2018-04-26",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_FTM",
+    "ticker": "FTM",
+    "exchange": "HOSE",
+    "first_trade_date": "2017-02-06",
+    "last_trade_date": "2022-05-13",
+    "end_reason": "MANDATORY_DELIST",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_FTS",
+    "ticker": "FTS",
+    "exchange": "HOSE",
+    "first_trade_date": "2017-01-13",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_GAS",
+    "ticker": "GAS",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_GEE",
+    "ticker": "GEE",
+    "exchange": "HOSE",
+    "first_trade_date": "2022-03-08",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_GEX",
+    "ticker": "GEX",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_GMD",
+    "ticker": "GMD",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_GVR",
+    "ticker": "GVR",
+    "exchange": "HOSE",
+    "first_trade_date": "2020-07-23",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_HAG",
+    "ticker": "HAG",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_HAI",
+    "ticker": "HAI",
+    "exchange": "HOSE",
+    "first_trade_date": "2010-01-18",
+    "last_trade_date": "2022-09-08",
+    "end_reason": "MANDATORY_DELIST",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_HBC",
+    "ticker": "HBC",
+    "exchange": "HOSE",
+    "first_trade_date": "2006-12-27",
+    "last_trade_date": "2024-09-05",
+    "end_reason": "MANDATORY_DELIST",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_HCM",
+    "ticker": "HCM",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_HDB",
+    "ticker": "HDB",
+    "exchange": "HOSE",
+    "first_trade_date": "2018-01-05",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_HDG",
+    "ticker": "HDG",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_HHV",
+    "ticker": "HHV",
+    "exchange": "HOSE",
+    "first_trade_date": "2022-01-20",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_HNG",
+    "ticker": "HNG",
+    "exchange": "HOSE",
+    "first_trade_date": "2015-07-20",
+    "last_trade_date": "2024-09-05",
+    "end_reason": "MANDATORY_DELIST",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_HPG",
+    "ticker": "HPG",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_HSG",
+    "ticker": "HSG",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_HT1",
+    "ticker": "HT1",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_KBC",
+    "ticker": "KBC",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_KDC",
+    "ticker": "KDC",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_KDH",
+    "ticker": "KDH",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_KOS",
+    "ticker": "KOS",
+    "exchange": "HOSE",
+    "first_trade_date": "2017-12-08",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_LPB",
+    "ticker": "LPB",
+    "exchange": "HOSE",
+    "first_trade_date": "2020-11-09",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_MBB",
+    "ticker": "MBB",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_MCH",
+    "ticker": "MCH",
+    "exchange": "HOSE",
+    "first_trade_date": "2025-12-25",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_MSB",
+    "ticker": "MSB",
+    "exchange": "HOSE",
+    "first_trade_date": "2020-12-23",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_MSN",
+    "ticker": "MSN",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_MWG",
+    "ticker": "MWG",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_NAB",
+    "ticker": "NAB",
+    "exchange": "HOSE",
+    "first_trade_date": "2024-03-08",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_NKG",
+    "ticker": "NKG",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_NLG",
+    "ticker": "NLG",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_NT2",
+    "ticker": "NT2",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_NVL",
+    "ticker": "NVL",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-12-28",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_OCB",
+    "ticker": "OCB",
+    "exchange": "HOSE",
+    "first_trade_date": "2021-01-28",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_PAN",
+    "ticker": "PAN",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_PC1",
+    "ticker": "PC1",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-11-16",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_PDR",
+    "ticker": "PDR",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_PHR",
+    "ticker": "PHR",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_PLX",
+    "ticker": "PLX",
+    "exchange": "HOSE",
+    "first_trade_date": "2017-04-21",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_PNJ",
+    "ticker": "PNJ",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_POM",
+    "ticker": "POM",
+    "exchange": "HOSE",
+    "first_trade_date": "2009-12-07",
+    "last_trade_date": "2024-05-09",
+    "end_reason": "MANDATORY_DELIST",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_POW",
+    "ticker": "POW",
+    "exchange": "HOSE",
+    "first_trade_date": "2019-01-14",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_PVD",
+    "ticker": "PVD",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_PVT",
+    "ticker": "PVT",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_REE",
+    "ticker": "REE",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_ROS",
+    "ticker": "ROS",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-09-01",
+    "last_trade_date": "2022-08-11",
+    "end_reason": "MANDATORY_DELIST",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_SAB",
+    "ticker": "SAB",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-12-06",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_SBT",
+    "ticker": "SBT",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_SHB",
+    "ticker": "SHB",
+    "exchange": "HOSE",
+    "first_trade_date": "2021-10-11",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_SIP",
+    "ticker": "SIP",
+    "exchange": "HOSE",
+    "first_trade_date": "2023-08-08",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_SJF",
+    "ticker": "SJF",
+    "exchange": "HOSE",
+    "first_trade_date": "2017-07-25",
+    "last_trade_date": "2023-11-24",
+    "end_reason": "MANDATORY_DELIST",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_SJS",
+    "ticker": "SJS",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_SSB",
+    "ticker": "SSB",
+    "exchange": "HOSE",
+    "first_trade_date": "2021-03-24",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_SSI",
+    "ticker": "SSI",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_STB",
+    "ticker": "STB",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_TAL",
+    "ticker": "TAL",
+    "exchange": "HOSE",
+    "first_trade_date": "2024-01-09",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_TCB",
+    "ticker": "TCB",
+    "exchange": "HOSE",
+    "first_trade_date": "2018-06-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_TCH",
+    "ticker": "TCH",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-10-05",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_TCX",
+    "ticker": "TCX",
+    "exchange": "HOSE",
+    "first_trade_date": "2025-10-21",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_TGG",
+    "ticker": "TGG",
+    "exchange": "HOSE",
+    "first_trade_date": "2018-07-16",
+    "last_trade_date": "2023-10-18",
+    "end_reason": "MANDATORY_DELIST",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_TPB",
+    "ticker": "TPB",
+    "exchange": "HOSE",
+    "first_trade_date": "2018-04-19",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VCB",
+    "ticker": "VCB",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VCG",
+    "ticker": "VCG",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VCI",
+    "ticker": "VCI",
+    "exchange": "HOSE",
+    "first_trade_date": "2017-07-07",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VCK",
+    "ticker": "VCK",
+    "exchange": "HOSE",
+    "first_trade_date": "2025-12-16",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VGC",
+    "ticker": "VGC",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VHC",
+    "ticker": "VHC",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VHM",
+    "ticker": "VHM",
+    "exchange": "HOSE",
+    "first_trade_date": "2018-05-17",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VIB",
+    "ticker": "VIB",
+    "exchange": "HOSE",
+    "first_trade_date": "2020-11-10",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VIC",
+    "ticker": "VIC",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VIX",
+    "ticker": "VIX",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VJC",
+    "ticker": "VJC",
+    "exchange": "HOSE",
+    "first_trade_date": "2017-02-28",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VND",
+    "ticker": "VND",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VNM",
+    "ticker": "VNM",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VPB",
+    "ticker": "VPB",
+    "exchange": "HOSE",
+    "first_trade_date": "2017-08-17",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VPI",
+    "ticker": "VPI",
+    "exchange": "HOSE",
+    "first_trade_date": "2017-11-28",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VPL",
+    "ticker": "VPL",
+    "exchange": "HOSE",
+    "first_trade_date": "2025-05-13",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VPX",
+    "ticker": "VPX",
+    "exchange": "HOSE",
+    "first_trade_date": "2025-12-11",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VRE",
+    "ticker": "VRE",
+    "exchange": "HOSE",
+    "first_trade_date": "2017-11-06",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VSC",
+    "ticker": "VSC",
+    "exchange": "HOSE",
+    "first_trade_date": "2016-01-04",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  },
+  {
+    "security_id": "SEC_VTP",
+    "ticker": "VTP",
+    "exchange": "HOSE",
+    "first_trade_date": "2024-03-12",
+    "last_trade_date": null,
+    "end_reason": "ACTIVE",
+    "verified": true
+  }
+]

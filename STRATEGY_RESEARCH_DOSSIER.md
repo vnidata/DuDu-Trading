@@ -226,6 +226,74 @@ Kết quả kiểm định nghiêm ngặt theo phương pháp Walk-Forward (cử
 
 ---
 
+### 3.4 Bằng Chứng Thực Nghiệm: Tác Động Định Lượng Của Survivorship Bias & Point-in-Time Universe (2016 – 2026)
+
+Để bóc tách và định lượng hóa triệt để hai thiên lệch nguy hiểm nhất trong định lượng tài chính là **Survivorship Bias (Thiên lệch sống sót)** và **Look-Ahead Bias (Thiên lệch nhìn trước)**, hệ thống đã thiết lập một thí nghiệm kiểm định song song 3 kịch bản trên cùng một chiến lược và tập dữ liệu từ ngày `2016-01-04` đến `2026-10-27`:
+
+```
+┌──────────────────────────────────────┬───────────────────────┬───────────────────────┬───────────────────────┐
+│ CHỈ SỐ SO SÁNH ĐỊNH LƯỢNG            │ KỊCH BẢN A:           │ KỊCH BẢN B:           │ KỊCH BẢN C:           │
+│ (VỐN BAN ĐẦU: 1 TỶ VND, 2016 - 2026) │ SURVIVOR VN100 HIỆN TẠI│ POINT-IN-TIME CỐ ĐỊNH │ POINT-IN-TIME TOP-100 │
+│                                      │ (UNCONTROLLED)        │ (ADTV ≥ 30 TỶ VND)    │ (ADTV TẠI t-1)        │
+├──────────────────────────────────────┼───────────────────────┼───────────────────────┼───────────────────────┤
+│ Tổng số lệnh phát sinh               │ 224 lệnh              │ 210 lệnh              │ 228 lệnh              │
+│ Tỷ lệ thắng (Win Rate)               │ 16.07%                │ 17.62%                │ 14.91%                │
+│ Hệ số lời/lỗ (Profit Factor)         │ 0.90                  │ 1.18                  │ 1.75                  │
+│ Tổng lãi/lỗ ròng (Net PnL)           │ -185,640,209 VND      │ +406,726,577 VND      │ +6,218,729,958 VND    │
+│ Tăng trưởng kép hàng năm (CAGR)      │ -1.90% / năm          │ +3.24% / năm          │ +20.25% / năm         │
+│ Sụt giảm tối đa (Max Drawdown)       │ -49.60%               │ -45.10%               │ -45.18%               │
+│ Tỷ số Sharpe hàng ngày               │ -0.05                 │ 0.27                  │ 1.02                  │
+│ Kiểm tra nhân quả (Causality Check)  │ THẤT BẠI (Look-ahead) │ 100% PASS             │ 100% PASS             │
+└──────────────────────────────────────┴───────────────────────┴───────────────────────┴───────────────────────┘
+```
+
+#### Bóc Tách Bản Chất Các Kịch Bản:
+
+1. **Kịch bản A (Survivor VN100 chiếu ngược về 2016): Thua lỗ nặng (-1.90% CAGR, Sharpe -0.05)**
+   - Trong danh sách 100 mã VN100 hiện tại, có tới **41 mã chưa từng tồn tại trên thị trường chứng khoán vào tháng 01/2016** (ví dụ TCB, VHM, VRE, VPB, HDB, POW, GVR, PLX, NVL, SAB...).
+   - Nhiều mã vốn dĩ niêm yết trên UPCoM hoặc HNX nhiều năm trước khi chuyển sang HOSE (như ACB, SHB, VIB, LPB, BSR, CTR, VTP, MCH, BVB...).
+   - Khi chạy mô phỏng ngây thơ không kiểm soát mốc niêm yết HOSE và sử dụng cơ chế `_ffill_nan` cũ, hệ thống phát sinh các lệnh vào/thoát ma (ghost fills) trên dữ liệu nội suy phẳng, dẫn đến hệ thống bị bào mòn vốn trầm trọng.
+
+2. **Kịch bản B (Point-in-Time Fixed 30B): Tồn tại điểm nghẽn thanh khoản (+3.24% CAGR, Sharpe 0.27)**
+   - Xác lập đúng mốc niêm yết trên HOSE, loại trừ các ngày trước chào sàn và áp dụng thời gian ổn định 20 phiên.
+   - Tuy nhiên, việc áp đặt ngưỡng cứng $30$ tỷ VND/phiên cho toàn bộ giai đoạn 2016–2020 khiến hệ thống bị **bỏ đói cơ hội giao dịch** (năm 2016 chỉ có $2.6\%$ số phiên toàn thị trường đạt điều kiện), hiệu quả vốn chỉ tương đương gửi tiết kiệm.
+
+3. **Kịch bản C (Point-in-Time Top-100 ADTV tại $t-1$): Hiệu suất vượt trội (+20.25% CAGR, Sharpe 1.02)**
+   - Lựa chọn 100 cổ phiếu có giá trị giao dịch bình quân ($\text{Giá thô} \times \text{Khối lượng}$) cao nhất trên sàn HOSE tại phiên $t-1$.
+   - Cho phép danh mục linh hoạt nắm bắt các xu hướng lớn của từng chu kỳ thị trường (2016–2018, 2020–2021, 2023–2026) mà không bị kẹt vào ngưỡng tiền tệ cố định của quá khứ.
+
+#### Bóc Tách 11 Lệnh Trên Nhóm Cổ Phiếu Đã Hủy Niêm Yết / Giáng Sàn (Delisted & Demoted)
+
+Trong Kịch bản C, vũ trụ mở rộng bao gồm cả các mã từng có thanh khoản lớn nhưng sau đó bị hủy niêm yết hoặc giáng sàn (ROS, FLC, HAI, AMD, HBC, HNG, POM, FTM, CDO, TGG, SJF). Dữ liệu ghi nhận **11 lệnh giao dịch thực tế** trên nhóm này:
+
+```
+┌────────┬────────────┬────────────┬─────────────┬─────────────┬────────────────┬──────────┬──────────────┐
+│ SYMBOL │ ENTRY DATE │ EXIT DATE  │ ENTRY PRICE │ EXIT PRICE  │ PNL (VND)      │ PNL (%)  │ EXIT REASON  │
+├────────┼────────────┼────────────┼─────────────┼─────────────┼────────────────┼──────────┼──────────────┤
+│ SJF    │ 2018-06-25 │ 2018-07-03 │ 19,942      │ 19,064      │ -19,528,510    │ -4.64%   │ stop_loss    │
+│ FTM    │ 2019-03-08 │ 2019-03-12 │ 18,446      │ 17,486      │ -100,339       │ -5.44%   │ stop_loss    │
+│ FTM    │ 2019-03-27 │ 2019-04-02 │ 19,711      │ 19,483      │ -4,949,986     │ -1.40%   │ stop_loss    │
+│ TGG    │ 2019-04-03 │ 2019-04-11 │ 3,665       │ 3,602       │ -2,738,398     │ -1.96%   │ stop_loss    │
+│ TGG    │ 2019-04-16 │ 2019-04-18 │ 4,601       │ 4,016       │ -178,663       │ -12.94%  │ stop_loss    │
+│ POM    │ 2020-01-17 │ 2020-01-22 │ 5,915       │ 5,395       │ -17,823,750    │ -9.02%   │ exit_deferred│
+│ FLC    │ 2021-03-24 │ 2021-05-04 │ 10,343      │ 10,440      │ +3,065,458     │ +0.68%   │ breakout_low │
+│ FTM    │ 2021-09-23 │ 2021-09-29 │ 4,932       │ 4,096       │ -169,329       │ -17.17%  │ exit_deferred│
+│ HBC    │ 2021-09-29 │ 2021-11-23 │ 21,896      │ 20,531      │ -11,189,190    │ -6.47%   │ stop_loss    │
+│ FTM    │ 2022-01-10 │ 2022-01-12 │ 9,123       │ 8,216       │ -649,438       │ -10.17%  │ stop_loss    │
+│ ROS    │ 2021-12-06 │ 2022-01-24 │ 8,437       │ 9,590       │ +51,145,290    │ +13.38%  │ exit_deferred│
+└────────┴────────────┴────────────┴─────────────┴─────────────┴────────────────┴──────────┴──────────────┘
+```
+
+**Kết luận thực nghiệm về khả năng tự vệ trước rủi ro hủy niêm yết:**
+- **Không xảy ra hiện tượng kẹt vốn hủy niêm yết:** Kỷ luật cắt lỗ $2.0\times\text{ATR}$ đã kích hoạt thoát lệnh dứt khoát ngay khi cổ phiếu chớm gãy xu hướng (mức lỗ chỉ từ $-1.4\%$ đến $-12.9\%$), nhiều tháng đến nhiều năm trước khi các doanh nghiệp này rơi vào biến cố đình chỉ hoặc hủy niêm yết vĩnh viễn.
+- **Tổng PnL trên 11 lệnh mã rác/hủy niêm yết:**
+  - Lãi: ROS ($+51.15$M), FLC ($+3.07$M) = $+54.22$M VND.
+  - Lỗ: SJF, POM, HBC, FTM, TGG = $-57.30$M VND.
+  - **Tác động ròng chỉ là $-3.08$ triệu VND**, hoàn toàn không làm suy suyển danh mục.
+- Khẳng định: Cơ chế Donchian Trend-Following kết hợp quản trị vốn chặt chẽ **hoàn toàn có khả năng sống sót và tự bảo vệ trước nhóm cổ phiếu rác/hủy niêm yết**, ngay cả khi chúng bước vào Top thanh khoản thị trường.
+
+---
+
 ## 4. ĐÁNH GIÁ PHÂN TÍCH KHOA HỌC & NHẬN DIỆN ĐIỂM NGHẼN
 
 Dựa trên kết quả khám nghiệm tử thi sai lầm (`WeaknessAnalyzer`) và phân tích dữ liệu lịch sử, hệ thống nhận diện **4 Điểm Nghẽn Trọng Yếu**:

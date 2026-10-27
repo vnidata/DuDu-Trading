@@ -129,11 +129,13 @@ def simulate_symbol(
     dates: pd.DatetimeIndex,
     cfg: BacktestConfig,
     close_open_at_end: bool = False,
+    tradable: Sequence[bool] | np.ndarray | None = None,
 ) -> BacktestResult:
     """Mô phỏng một mã trên cửa sổ ngày đã cắt sẵn.
 
     `arrays` gồm các khoá: open, high, low, close, upper, lower, atr, ceiling,
     floor, adv, regime, age - mảng 1-D cùng độ dài.
+    `tradable`: mảng bool cho biết phiên t có được phép giao dịch hay không.
     """
     p = cfg.strategy
     mkt = cfg.market
@@ -153,6 +155,8 @@ def simulate_symbol(
     age = arrays["age"].tolist()
     n = len(cl)
     fin = math.isfinite
+
+    is_tradable = tradable if tradable is not None else arrays.get("tradable", None)
 
     cash = float(cfg.initial_capital)
     units: list[_Unit] = []
@@ -231,15 +235,16 @@ def simulate_symbol(
 
     for t in range(n):
         price = cl[t]
+        can_trade = bool(is_tradable[t]) if is_tradable is not None else True
 
         # ---- A. Lệnh thoát treo từ phiên trước (kẹt sàn hoặc T+2.5) ----
-        if force_exit and units and op[t] > floor[t] and op[t] > 0:
+        if can_trade and force_exit and units and op[t] > floor[t] and op[t] > 0:
             close_units(t, op[t] * (1.0 - mkt.slippage), "exit_deferred")
             if not units:
                 force_exit = False
 
         # ---- B. Stop loss 2N (chỉ áp dụng cho Unit đã về tài khoản) ----
-        if units and not force_exit:
+        if can_trade and units and not force_exit:
             sellable = [u for u in units if u.entry_t + mkt.settlement_lag <= t]
             if sellable:
                 ref = sellable[-1]
@@ -252,7 +257,7 @@ def simulate_symbol(
                         close_units(t, fill * (1.0 - mkt.slippage), "stop_loss")
 
         # ---- C. Tín hiệu thoát: đóng cửa dưới đáy Donchian ----
-        if units and not force_exit and fin(lower[t]) and price < lower[t]:
+        if can_trade and units and not force_exit and fin(lower[t]) and price < lower[t]:
             if p.block_floor_exit and price <= floor[t]:
                 force_exit = True
             else:
@@ -261,7 +266,7 @@ def simulate_symbol(
         equity_ref = cash + _unit_shares(units) * price
 
         # ---- D. Kim tự tháp: gia tăng Unit mỗi 0.5N thuận lợi ----
-        if units and not force_exit and len(units) < p.max_units:
+        if can_trade and units and not force_exit and len(units) < p.max_units:
             last = units[-1]
             mature = last.entry_t + mkt.settlement_lag <= t
             add_level = last.entry_price + p.pyramid_atr * last.n_at_entry
@@ -270,7 +275,7 @@ def simulate_symbol(
                 open_unit(t, price, equity_ref, atr[t])
 
         # ---- E. Vào lệnh mới khi phá đỉnh Donchian ----
-        if not units and not force_exit:
+        if can_trade and not units and not force_exit:
             u = upper[t]
             n_value = atr[t]
             liquid = fin(adv[t]) and adv[t] >= p.adv_min
@@ -371,10 +376,13 @@ def run_symbol_window(
     t1: int,
     cfg: BacktestConfig,
     close_open_at_end: bool = True,
+    tradable: Sequence[bool] | np.ndarray | None = None,
 ) -> BacktestResult:
     j = bank.panel.symbol_index[symbol]
     arrays, dates = window_arrays(bank, j, t0, t1, cfg.strategy)
-    res = simulate_symbol(symbol, arrays, dates, cfg, close_open_at_end=close_open_at_end)
+    if tradable is not None:
+        arrays["tradable"] = np.asarray(tradable)
+    res = simulate_symbol(symbol, arrays, dates, cfg, close_open_at_end=close_open_at_end, tradable=tradable)
     res.start, res.stop = t0, t1
     return res
 
@@ -386,13 +394,23 @@ def run_panel(
     t1: int | None = None,
     symbols: Sequence[str] | None = None,
     close_open_at_end: bool = True,
+    tradable: np.ndarray | None = None,
 ) -> dict[str, BacktestResult]:
     t1 = bank.n_dates() if t1 is None else t1
     names = list(symbols) if symbols else list(bank.panel.symbols)
+    panel = bank.panel
     out: dict[str, BacktestResult] = {}
-    for sym in names:
+    for s_idx, sym in enumerate(names):
         try:
-            out[sym] = run_symbol_window(bank, sym, t0, t1, cfg, close_open_at_end)
+            sym_tradable = None
+            if tradable is not None:
+                j = panel.symbol_index[sym]
+                c = j if tradable.shape[1] == panel.shape[1] else s_idx
+                if tradable.shape[0] == bank.n_dates():
+                    sym_tradable = tradable[t0:t1, c]
+                else:
+                    sym_tradable = tradable[:, c]
+            out[sym] = run_symbol_window(bank, sym, t0, t1, cfg, close_open_at_end, tradable=sym_tradable)
         except Exception:  # pragma: no cover - phòng dữ liệu lỗi
             continue
     return out
@@ -423,14 +441,30 @@ def simulate_portfolio(
     t1: int | None = None,
     symbols: Sequence[str] | None = None,
     close_open_at_end: bool = True,
+    tradable: np.ndarray | None = None,
 ) -> dict[str, Any]:
-    """Danh mục long-only chia sẻ một tài khoản tiền mặt, không dùng margin."""
+    """Danh mục long-only chia sẻ một tài khoản tiền mặt, không dùng margin.
+
+    Parameters
+    ----------
+    tradable : np.ndarray | None, optional
+        Ma trận boolean (n_dates, n_symbols) hoặc (t1-t0, n_symbols) xác định
+        mã có được phép giao dịch tại phiên t hay không. Nếu None, toàn bộ
+        các phiên và mã đều được coi là tradable.
+    """
     p = cfg.strategy
     mkt = cfg.market
     panel = bank.panel
     t1 = bank.n_dates() if t1 is None else t1
     names = list(symbols) if symbols else list(panel.symbols)
     cols = {s: panel.symbol_index[s] for s in names}
+
+    def _is_tradable(t: int, j: int, sym: str) -> bool:
+        if tradable is None:
+            return True
+        r = t if tradable.shape[0] == bank.n_dates() else (t - t0)
+        c = j if tradable.shape[1] == panel.shape[1] else names.index(sym)
+        return bool(tradable[r, c])
 
     upper = bank.upper_ref(p.entry_window)
     lower = bank.lower_ref(p.exit_window)
@@ -556,6 +590,8 @@ def simulate_portfolio(
         for sym in list(positions):
             j = cols[sym]
             pos = positions[sym]
+            if not _is_tradable(t, j, sym):
+                continue
             price_c = panel.close[t, j]
             if pos.force_exit and panel.open[t, j] > bank.floor[t, j] > 0:
                 close_units(sym, t, panel.open[t, j] * (1.0 - mkt.slippage), "exit_deferred")
@@ -587,6 +623,8 @@ def simulate_portfolio(
             if pos.force_exit or len(pos.units) >= p.max_units:
                 continue
             j = cols[sym]
+            if not _is_tradable(t, j, sym):
+                continue
             price_c = panel.close[t, j]
             last = pos.units[-1]
             if price_c < last["price"] + p.pyramid_atr * last["n"]:
@@ -600,6 +638,8 @@ def simulate_portfolio(
             candidates: list[tuple[float, str]] = []
             for sym, j in cols.items():
                 if sym in positions:
+                    continue
+                if not _is_tradable(t, j, sym):
                     continue
                 u = upper[t, j]
                 price_c = panel.close[t, j]

@@ -354,3 +354,56 @@ def test_window_arrays_shapes_match():
     assert len(dates) == 190
     for key, arr in arrays.items():
         assert arr.shape[0] == 190, key
+
+
+def test_tradable_flag_blocks_entry_and_ghost_exit():
+    from dudu.backtest import simulate_symbol, run_symbol_window
+
+    df = synthetic_symbol(seed=42, n=300)
+    bank = make_bank({"TEST": df})
+    cfg = BacktestConfig()
+    
+    # 1. Normal run without tradable constraint
+    res_normal = run_symbol_window(bank, "TEST", 0, 300, cfg, close_open_at_end=False)
+    assert len(res_normal.trades) > 0, "Normal run should produce trades"
+    first_trade = res_normal.trades[0]
+    entry_date = pd.Timestamp(first_trade["entry_date"])
+    dates = list(bank.panel.dates[:300])
+    entry_idx = dates.index(entry_date)
+
+    # 2. Set tradable=False at the exact entry date -> entry must be blocked!
+    tradable = np.ones(300, dtype=bool)
+    tradable[entry_idx] = False
+    res_blocked = run_symbol_window(bank, "TEST", 0, 300, cfg, close_open_at_end=False, tradable=tradable)
+    # The trade could not enter at entry_idx
+    for tr in res_blocked.trades:
+        assert pd.Timestamp(tr["entry_date"]) != entry_date
+
+    # 3. Test ghost exit prevention: set tradable=False during trade holding
+    # Find exit date of normal trade
+    if first_trade.get("exit_date"):
+        exit_date = pd.Timestamp(first_trade["exit_date"])
+        exit_idx = dates.index(exit_date)
+        tradable2 = np.ones(300, dtype=bool)
+        tradable2[exit_idx] = False  # Suspended on exit date
+        res_delayed = run_symbol_window(bank, "TEST", 0, 300, cfg, close_open_at_end=False, tradable=tradable2)
+        # Should not exit on exit_date!
+        for tr in res_delayed.trades:
+            if pd.Timestamp(tr["entry_date"]) == entry_date:
+                assert pd.Timestamp(tr["exit_date"]) != exit_date
+
+
+def test_portfolio_tradable_matrix_blocks_activity():
+    from dudu.backtest import simulate_portfolio
+
+    frames = {f"S{i}": synthetic_symbol(seed=50 + i) for i in range(4)}
+    bank = make_bank(frames)
+    cfg = BacktestConfig()
+    pcfg = PortfolioConfig(max_positions=3)
+
+    # Completely untradable matrix: no trades possible
+    tradable_zeros = np.zeros((bank.n_dates(), bank.panel.shape[1]), dtype=bool)
+    out_zeros = simulate_portfolio(bank, cfg, pcfg, tradable=tradable_zeros, close_open_at_end=False)
+    assert len(out_zeros["trades"]) == 0
+    assert np.all(out_zeros["exposure"] == 0.0)
+

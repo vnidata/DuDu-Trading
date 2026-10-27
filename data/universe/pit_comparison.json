@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Survivor VN100 (Current Snapshot)",
+    "trades_count": 224,
+    "win_rate_pct": 16.07,
+    "profit_factor": 0.9,
+    "net_pnl_vnd": -185640209.0,
+    "cagr_pct": -1.9,
+    "max_drawdown_pct": -49.6,
+    "sharpe": -0.05
+  },
+  {
+    "name": "Point-in-Time Fixed 30B VND",
+    "trades_count": 210,
+    "win_rate_pct": 17.62,
+    "profit_factor": 1.18,
+    "net_pnl_vnd": 406726577.0,
+    "cagr_pct": 3.24,
+    "max_drawdown_pct": -45.1,
+    "sharpe": 0.27
+  },
+  {
+    "name": "Point-in-Time Top-100 ADTV",
+    "trades_count": 228,
+    "win_rate_pct": 14.91,
+    "profit_factor": 1.75,
+    "net_pnl_vnd": 6218729958.0,
+    "cagr_pct": 20.25,
+    "max_drawdown_pct": -45.18,
+    "sharpe": 1.02
+  }
+]

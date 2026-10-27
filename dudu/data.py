@@ -426,6 +426,10 @@ class PricePanel:
         return len(self.dates)
 
     @property
+    def shape(self) -> tuple[int, int]:
+        return self.close.shape
+
+    @property
     def symbol_index(self) -> dict[str, int]:
         return {s: j for j, s in enumerate(self.symbols)}
 
