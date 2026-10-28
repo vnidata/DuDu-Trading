@@ -2,8 +2,9 @@
 pandas>=2.0
 numpy>=1.26
 
-# Dữ liệu thị trường Việt Nam
-vnstock3>=3.1.0
+# Dữ liệu thị trường Việt Nam (từ https://vnstocks.com/download)
+--extra-index-url https://vnstocks.com/api/packages
+vnstock>=5.2.1
 
 # TLS dùng kho chứng thư Windows (bắt buộc trong mạng nội bộ có proxy chèn CA)
 truststore>=0.9

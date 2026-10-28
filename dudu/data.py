@@ -84,11 +84,24 @@ class DataFetchInterrupted(RuntimeError):
 # Universe
 # --------------------------------------------------------------------------
 def fetch_universe(group: str = "VN100", retries: int = 3) -> list[str]:
-    """Lấy danh sách mã theo nhóm chỉ số từ API VCI (nguồn dữ liệu của vnstock).
+    """Lấy danh sách mã theo nhóm chỉ số từ vnstock 5.x hoặc API VCI dự phòng.
 
     Trả về danh sách mã đã sắp xếp. Ném lỗi nếu không lấy được để tránh âm
     thầm chạy trên universe rỗng.
     """
+    # 1. Ưu tiên thư viện vnstock 5.x chính thức (từ https://vnstocks.com/download)
+    try:
+        from vnstock import Listing
+        res = Listing().symbols_by_group(group)
+        if res is not None:
+            symbols = sorted({str(s).upper() for s in res.dropna().tolist() if str(s).strip()})
+            if symbols:
+                log.info("Universe %s (vnstock 5.x): %d mã", group, len(symbols))
+                return symbols
+    except Exception as exc:
+        log.debug("vnstock 5.x Listing() nhóm %s: %s, chuyển sang API dự phòng", group, exc)
+
+    # 2. Dự phòng API VCI trực tiếp
     inject_truststore()
     import requests
 
@@ -102,7 +115,7 @@ def fetch_universe(group: str = "VN100", retries: int = 3) -> list[str]:
             symbols = sorted({str(row["symbol"]).upper() for row in payload if row.get("symbol")})
             if not symbols:
                 raise ValueError(f"Nhóm {group} trả về danh sách rỗng")
-            log.info("Universe %s: %d mã", group, len(symbols))
+            log.info("Universe %s (VCI API): %d mã", group, len(symbols))
             return symbols
         except Exception as exc:  # pragma: no cover - phụ thuộc mạng
             last_err = exc
@@ -213,9 +226,80 @@ def _fetch_vndirect(symbol: str, start: str, end: str | None = None, timeout: fl
         return _normalize(df, symbol)
 
 
+_VNSTOCK_AUTHED: bool | None = None
+
+
+def _init_vnstock() -> None:
+    global _VNSTOCK_AUTHED
+    if _VNSTOCK_AUTHED is not None:
+        return
+    import os
+
+    api_key = os.getenv("VNSTOCKS_API_KEY") or os.getenv("VNSTOCK_API_KEY")
+    if api_key:
+        try:
+            import vnstock
+
+            res = vnstock.login(api_key.strip())
+            _VNSTOCK_AUTHED = True
+            log.info("vnstock 5.x: Đăng nhập API key thành công (cấp: %s)", res.get("tier"))
+        except Exception as exc:
+            _VNSTOCK_AUTHED = False
+            log.warning("vnstock 5.x: Đăng nhập API key thất bại (%s)", exc)
+    else:
+        _VNSTOCK_AUTHED = False
+
+
+def _fetch_vnstock(symbol: str, start: str, end: str | None = None, source: str = "KBS") -> pd.DataFrame:
+    """Tải lịch sử OHLCV qua thư viện chính thức Vnstock 5.x (https://vnstocks.com/download).
+
+    Tự động chuẩn hoá đơn vị giá và tương thích cả cổ phiếu (Quote) lẫn chỉ số (Market.index).
+    """
+    _init_vnstock()
+    inject_truststore()
+    logging.getLogger("vnstock").setLevel(logging.ERROR)
+    sym = symbol.upper()
+
+    try:
+        from vnstock import Market, Quote
+    except ImportError as exc:
+        raise RuntimeError(
+            "Chưa cài đặt vnstock 5.x: pip install -U --extra-index-url https://vnstocks.com/api/packages vnstock"
+        ) from exc
+
+    if sym in ("VN-INDEX", "VNINDEX", "^VNINDEX"):
+        df = Market().index("VNINDEX").history(start=start, end=end or None, interval="1D")
+    else:
+        try:
+            q = Quote(symbol=sym, source=source)
+            df = q.history(start=start, end=end or None, interval="1D")
+        except Exception:
+            fallback_source = "VCI" if source.upper() == "KBS" else "KBS"
+            q = Quote(symbol=sym, source=fallback_source)
+            df = q.history(start=start, end=end or None, interval="1D")
+
+    if df is None or len(df) == 0:
+        raise ValueError(f"vnstock 5.x trả về chuỗi rỗng cho {symbol}")
+
+    out = _normalize(df, symbol)
+    # Kiểm tra xem có bị giới hạn 365 ngày của tài khoản guest không khi yêu cầu mốc thời gian xa hơn
+    start_ts = pd.Timestamp(start)
+    if (out["time"].min() - start_ts).days > 365:
+        raise ValueError(
+            f"vnstock 5.x cấp Khách bị giới hạn 365 ngày gần nhất (từ {out['time'].min().date()}), cần đủ từ {start}"
+        )
+    return out
+
+
 def _fetch_remote(symbol: str, start: str, end: str | None, retries: int = 3) -> pd.DataFrame:
-    """Tải dữ liệu từ xa: ưu tiên VNDirect Real-time Feed, dự phòng vnstock (VCI)."""
-    # 1. Ưu tiên VNDirect DChart API (nhanh, realtime trong phiên, bypass proxy SSL)
+    """Tải dữ liệu từ xa: Thử thư viện chính thức Vnstock 5.x, kết hợp failover VNDirect DChart."""
+    # 1. Thử tải qua Vnstock 5.x (phân phối chính thức https://vnstocks.com/download)
+    try:
+        return _fetch_vnstock(symbol, start, end)
+    except Exception as exc:
+        log.debug("%s: vnstock 5.x chưa hoàn tất (%s), chuyển sang VNDirect Real-time feed", symbol, exc)
+
+    # 2. Dự phòng VNDirect DChart API (siêu tốc ~100ms/mã, có nến realtime, không vướng hạn ngạch guest)
     last_err: Exception | None = None
     for attempt in range(retries):
         try:
@@ -224,29 +308,6 @@ def _fetch_remote(symbol: str, start: str, end: str | None, retries: int = 3) ->
             last_err = exc
             time.sleep(0.3 * (attempt + 1))
 
-    # 2. Dự phòng: vnstock (VCI)
-    log.warning("%s: VNDirect lỗi (%s), chuyển sang nguồn dự phòng vnstock/VCI", symbol, last_err)
-    inject_truststore()
-    logging.getLogger("vnstock").setLevel(logging.ERROR)
-    logging.getLogger("vnai").setLevel(logging.ERROR)
-    try:
-        from vnstock import Quote
-    except ImportError:
-        raise RuntimeError(f"Không tải được {symbol}: {last_err}") from last_err
-
-    for attempt in range(retries):
-        LIMITER.acquire()
-        try:
-            quote = Quote(symbol=symbol.upper(), source="VCI")
-            df = quote.history(start=start, end=end or None, interval="1D")
-            if df is None or len(df) == 0:
-                raise ValueError("chuỗi rỗng")
-            return _normalize(df, symbol)
-        except SystemExit as exc:  # vnai gọi sys.exit khi vượt rate limit
-            raise DataFetchInterrupted(f"vnstock dừng tiến trình: {exc}") from None
-        except Exception as exc:  # pragma: no cover - phụ thuộc mạng
-            last_err = exc
-            time.sleep(1.2 * (attempt + 1))
     raise RuntimeError(f"Không tải được {symbol}: {last_err}")
 
 
@@ -256,8 +317,11 @@ def _fetch_with_source(
     end: str | None,
     source: str = "auto",
 ) -> pd.DataFrame:
-    """Tải nến giá từ VNDirect/VCI hoặc MCP (SSI, DNSE, VCBS) với cơ chế failover."""
+    """Tải nến giá từ Vnstock 5.x, VNDirect hoặc MCP (SSI, DNSE, VCBS) với cơ chế failover."""
     source_lower = source.lower()
+    if source_lower in ("vnstock", "vnstock5"):
+        return _fetch_vnstock(symbol, start, end)
+
     if source_lower in ("ssi", "dnse", "vcbs"):
         from .mcp_client import StockMCPClient
 
@@ -275,7 +339,7 @@ def _fetch_with_source(
         try:
             return _fetch_vndirect(symbol, start, end)
         except Exception as exc:
-            log.info("%s: VNDirect không khả dụng (%s), chuyển sang MCP/VCI", symbol, exc)
+            log.info("%s: VNDirect không khả dụng (%s), chuyển sang MCP/Vnstock", symbol, exc)
 
         # 2. Dự phòng MCP nếu có token
         from .mcp_auth import get_token
@@ -286,7 +350,7 @@ def _fetch_with_source(
                 coordinator = MultiProviderMCPClient()
                 return coordinator.fetch_stock_candles(symbol, start, end)
             except Exception as exc:
-                log.info("MCP tải %s không thành công (%s), chuyển sang VCI vnstock", symbol, exc)
+                log.info("MCP tải %s không thành công (%s), chuyển sang Vnstock", symbol, exc)
 
     return _fetch_remote(symbol, start, end)
 

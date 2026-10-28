@@ -421,7 +421,7 @@ def build_meta(
     git_sha: str = "",
     repo_url: str = "",
     pages_url: str = "",
-    data_source: str = "vnstock 3.x - nguồn VCI (Vietcap)",
+    data_source: str = "Vnstock 5.x (vnstocks.com/download) · KBS / VCI",
     runtime_seconds: float = 0.0,
 ) -> dict[str, Any]:
     return {

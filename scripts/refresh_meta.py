@@ -59,8 +59,12 @@ def main() -> int:
         # này — phải đọc lại chuỗi giá NGÀY của chỉ số tham chiếu.
         symbol = meta["data"].get("benchmark", args.benchmark)
         start = meta["data"].get("date_start", "2016-01-01")
-        end = meta["data"].get("date_end")
-        daily = load_benchmark(symbol, start=start, end=end, policy=CachePolicy(sleep_between=0.0))
+        daily = load_benchmark(symbol, start=start, end=None, policy=CachePolicy(max_age_minutes=5.0, sleep_between=0.0))
+        latest_date = str(daily["time"].max().date())
+        meta["data"]["date_end"] = latest_date
+        meta["data"]["n_sessions"] = int(len(daily))
+        meta["data"]["source"] = "Vnstock 5.x (vnstocks.com/download) · KBS / VCI"
+        meta["generated_at"] = utc_now_iso()
         eq = daily["close"].to_numpy(dtype=float)
         m = equity_metrics(eq, 252)
         meta["headline"]["benchmark_symbol"] = symbol

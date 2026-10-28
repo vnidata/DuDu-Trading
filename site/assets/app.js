@@ -1113,8 +1113,7 @@ Unit = (risk_per_unit × Equity) / N                    [chế độ "volatility
       thay đổi biên độ và lô chẵn, các chu kỳ margin call 2018 và 2022. Một bộ tham số cố định không thể phản ánh
       hết các chế độ thị trường khác nhau; walk-forward là công cụ chính để nhìn thấy sự bất ổn này.</p></details>
     <details class="doc"><summary>Nguồn dữ liệu và tái lập</summary>
-      <p>Dữ liệu tải qua vnstock 3.x với nguồn VCI, lưu cache cục bộ trong <code>data/raw/</code>. Nhà cung cấp
-      giới hạn 60 request/phút nên pipeline tự điều tiết xuống 48 request/phút. Mọi hạt giống ngẫu nhiên đều cố định;
+      <p>Dữ liệu tải qua thư viện chính thức Vnstock 5.x (<a href="https://vnstocks.com/download" target="_blank" rel="noopener">vnstocks.com/download</a>) với nguồn KBS / VCI, lưu cache cục bộ trong <code>data/raw/</code>. Pipeline tích hợp cơ chế failover đa tầng (Vnstock 5.x + VNDirect Realtime feed) đảm bảo cập nhật liên tục trong phiên giao dịch mà không gián đoạn. Mọi hạt giống ngẫu nhiên đều cố định;
       kết quả có thể tái lập bằng <code>python scripts/run_research.py</code>.</p></details>`;
 }
 
