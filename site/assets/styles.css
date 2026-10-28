@@ -284,6 +284,33 @@ footer {
   color: var(--pos);
   font-size: 12px;
   font-weight: 500;
+  transition: all 0.3s ease;
+}
+.live-status-pill.lunch {
+  background: rgba(230, 160, 30, 0.12);
+  border-color: rgba(230, 160, 30, 0.35);
+  color: #e6a01e;
+}
+.live-status-pill.lunch .pulse-dot {
+  background: #e6a01e;
+  box-shadow: 0 0 6px #e6a01e;
+  animation: none;
+}
+.live-status-pill.closed,
+.live-status-pill.holiday,
+.live-status-pill.pre_open,
+.live-status-pill.closing {
+  background: rgba(140, 150, 160, 0.12);
+  border-color: rgba(140, 150, 160, 0.25);
+  color: var(--text-dim);
+}
+.live-status-pill.closed .pulse-dot,
+.live-status-pill.holiday .pulse-dot,
+.live-status-pill.pre_open .pulse-dot,
+.live-status-pill.closing .pulse-dot {
+  background: var(--text-dim);
+  box-shadow: none;
+  animation: none;
 }
 .pulse-dot {
   width: 7px;
@@ -312,6 +339,13 @@ footer {
   background: var(--line);
   color: var(--text);
   transform: rotate(45deg);
+}
+.btn-refresh.spinning {
+  animation: spin 0.8s linear infinite;
+  pointer-events: none;
+}
+@keyframes spin {
+  100% { transform: rotate(360deg); }
 }
 .session-header-row {
   display: flex;

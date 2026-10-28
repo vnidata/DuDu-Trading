@@ -169,48 +169,153 @@ async function boot() {
   initLivePolling();
 }
 
-/* ------------------------------ LIVE POLLING 5 PHÚT ------------------------------ */
-const POLL_INTERVAL_SECONDS = 300; // 5 phút
-let countdownSeconds = POLL_INTERVAL_SECONDS;
+/* ------------------------------ LIVE POLLING & ĐỒNG BỘ THỜI GIAN THỰC ------------------------------ */
+const POLL_CYCLE_SECONDS = 300; // 5 phút chu kỳ định kỳ
+const CI_PIPELINE_OFFSET_SECONDS = 30; // 30s độ trễ hoàn tất commit & deploy trên GitHub
 let isRefreshing = false;
+let pollingTimer = null;
+
+function getVietnamNow() {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  return new Date(utc + 7 * 3600000);
+}
+
+function getMarketSessionInfo(vnDate) {
+  const day = vnDate.getDay(); // 0 = CN, 6 = T7
+  if (day === 0 || day === 6) {
+    return { isTrading: false, session: "holiday", label: "Cuối tuần", badge: "Cuối tuần", note: "Thị trường nghỉ giao dịch cuối tuần" };
+  }
+  const h = vnDate.getHours();
+  const m = vnDate.getMinutes();
+  const mins = h * 60 + m;
+
+  if (mins < 525) { // Trước 08:45
+    return { isTrading: false, session: "pre_open", label: "Chưa mở cửa", badge: "Chưa mở", note: "Mở cửa lúc 09:00" };
+  }
+  if (mins < 540) { // 08:45 - 09:00: ATO
+    return { isTrading: true, session: "ato", label: "ATO", badge: "ATO", note: "Khớp lệnh định kỳ mở cửa (08:45 - 09:00)" };
+  }
+  if (mins < 690) { // 09:00 - 11:30: Phiên sáng
+    return { isTrading: true, session: "morning", label: "Live", badge: "Phiên sáng", note: "Khớp lệnh liên tục phiên sáng (09:00 - 11:30)" };
+  }
+  if (mins < 780) { // 11:30 - 13:00: Nghỉ trưa
+    return { isTrading: false, session: "lunch", label: "Nghỉ trưa", badge: "Nghỉ trưa", note: "Tạm nghỉ trưa — Phiên chiều mở lúc 13:00" };
+  }
+  if (mins < 870) { // 13:00 - 14:30: Phiên chiều
+    return { isTrading: true, session: "afternoon", label: "Live", badge: "Phiên chiều", note: "Khớp lệnh liên tục phiên chiều (13:00 - 14:30)" };
+  }
+  if (mins < 885) { // 14:30 - 14:45: ATC
+    return { isTrading: true, session: "atc", label: "ATC", badge: "ATC", note: "Khớp lệnh định kỳ đóng cửa (14:30 - 14:45)" };
+  }
+  if (mins < 900) { // 14:45 - 15:00: Chờ chốt
+    return { isTrading: false, session: "closing", label: "Chờ chốt", badge: "Thỏa thuận", note: "Thoả thuận cuối phiên & chốt ngày" };
+  }
+  return { isTrading: false, session: "closed", label: "Chốt phiên", badge: "Đã đóng", note: "Phiên giao dịch đã kết thúc" };
+}
+
+function getTargetRefreshTimestamp() {
+  const now = Date.now();
+  const periodMs = POLL_CYCLE_SECONDS * 1000;
+  const offsetMs = CI_PIPELINE_OFFSET_SECONDS * 1000;
+  // Căn chuẩn theo chu kỳ 5 phút thực tế của đồng hồ, giữ nguyên khi F5 / load lại trang
+  const slot = Math.floor((now - offsetMs) / periodMs);
+  return (slot + 1) * periodMs + offsetMs;
+}
+
+function getRemainingSeconds() {
+  const target = getTargetRefreshTimestamp();
+  const diff = Math.round((target - Date.now()) / 1000);
+  return Math.max(0, diff);
+}
 
 async function refreshSnapshotData() {
   if (isRefreshing) return;
   isRefreshing = true;
-  const pill = el("liveStatusText");
-  if (pill) pill.textContent = "Đang tải…";
+
+  const pillText = el("liveStatusText");
+  const btn = el("btnManualRefresh");
+  if (pillText) pillText.textContent = "Đang tải…";
+  if (btn) btn.classList.add("spinning");
 
   try {
     const bust = "?_t=" + Date.now();
-    const [snap, hist] = await Promise.all([
+    const [snap, hist, meta] = await Promise.all([
       loadJSON("data/snapshot.json" + bust),
       loadJSON("data/snapshot_history.json" + bust),
+      loadJSON("data/meta.json" + bust).catch(() => null),
     ]);
     if (snap) {
       state.snapshot = snap;
       if (Array.isArray(hist)) state.snapHistory = hist;
+      if (meta) {
+        state.meta = meta;
+        fillHeader();
+      }
       renderSnapshot();
       renderRecommendations();
       renderAdvisors();
     }
+    try {
+      localStorage.setItem("dudu_last_refresh", Date.now().toString());
+    } catch (_) {}
   } catch (err) {
     console.warn("Lỗi refresh snapshot:", err);
   } finally {
     isRefreshing = false;
-    countdownSeconds = POLL_INTERVAL_SECONDS;
-    if (pill) pill.textContent = "Live";
+    if (btn) btn.classList.remove("spinning");
     updateCountdownDisplay();
   }
 }
 
 function updateCountdownDisplay() {
-  const m = Math.floor(countdownSeconds / 60);
-  const s = countdownSeconds % 60;
-  const str = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  const vnNow = getVietnamNow();
+  const sess = getMarketSessionInfo(vnNow);
+
+  const pill = el("livePill");
+  const pillText = el("liveStatusText");
   const cd = el("liveCountdown");
-  if (cd) cd.textContent = str;
   const nextRef = el("snapNextRefresh");
-  if (nextRef) nextRef.textContent = `Làm mới sau: ${str}`;
+
+  if (!pill || !cd) return;
+
+  // Cập nhật class trạng thái cho pill
+  pill.className = "live-status-pill " + sess.session;
+
+  if (isRefreshing) {
+    if (pillText) pillText.textContent = "Đang tải…";
+    cd.textContent = "…";
+    if (nextRef) nextRef.textContent = "Đang đồng bộ dữ liệu…";
+    return;
+  }
+
+  if (sess.isTrading) {
+    // Trong phiên giao dịch: đếm ngược chu kỳ 5 phút đồng bộ theo đồng hồ
+    const rem = getRemainingSeconds();
+    const m = Math.floor(rem / 60);
+    const s = rem % 60;
+    const str = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+
+    if (pillText) pillText.textContent = sess.label;
+    cd.textContent = str;
+    cd.style.display = "inline";
+    if (nextRef) nextRef.textContent = `Làm mới sau: ${str}`;
+    pill.title = `${sess.note} · Đồng bộ tự động sau ${str}. Nhấn 🔄 để tải ngay`;
+  } else if (sess.session === "lunch") {
+    // Nghỉ trưa: thông báo phiên chiều lúc 13:00
+    if (pillText) pillText.textContent = "Nghỉ trưa";
+    cd.textContent = "13:00 mở";
+    cd.style.display = "inline";
+    if (nextRef) nextRef.textContent = "Phiên chiều: 13:00";
+    pill.title = "Thị trường nghỉ trưa (11:30 - 13:00). Nhấn 🔄 để làm mới thủ công.";
+  } else {
+    // Ngoài giờ giao dịch hoặc cuối tuần
+    if (pillText) pillText.textContent = sess.label;
+    cd.textContent = "15:00 chốt";
+    cd.style.display = "inline";
+    if (nextRef) nextRef.textContent = `Trạng thái: ${sess.label}`;
+    pill.title = `${sess.note}. Nhấn 🔄 để làm mới thủ công.`;
+  }
 }
 
 function initLivePolling() {
@@ -223,16 +328,28 @@ function initLivePolling() {
     });
   }
 
-  if (typeof setInterval === "function") {
-    setInterval(() => {
-      if (countdownSeconds > 0) {
-        countdownSeconds--;
-        updateCountdownDisplay();
-      } else {
+  if (pollingTimer) {
+    clearInterval(pollingTimer);
+  }
+
+  let lastCheckedSlot = Math.floor((Date.now() - CI_PIPELINE_OFFSET_SECONDS * 1000) / (POLL_CYCLE_SECONDS * 1000));
+
+  pollingTimer = setInterval(() => {
+    const vnNow = getVietnamNow();
+    const sess = getMarketSessionInfo(vnNow);
+
+    updateCountdownDisplay();
+
+    // Chỉ tự động fetch khi đang trong phiên giao dịch
+    if (sess.isTrading) {
+      const now = Date.now();
+      const currentSlot = Math.floor((now - CI_PIPELINE_OFFSET_SECONDS * 1000) / (POLL_CYCLE_SECONDS * 1000));
+      if (currentSlot > lastCheckedSlot) {
+        lastCheckedSlot = currentSlot;
         refreshSnapshotData();
       }
-    }, 1000);
-  }
+    }
+  }, 1000);
 }
 
 /* ------------------------------ PHIÊN GIAO DỊCH ------------------------------ */
