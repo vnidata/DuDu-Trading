@@ -41,7 +41,7 @@ log = logging.getLogger("auto_updater")
 
 
 def run_snapshot(refresh: bool = False) -> bool:
-    """Gọi lệnh snapshot.py cập nhật thị trường."""
+    """Gọi lệnh snapshot.py và refresh_meta.py cập nhật thị trường."""
     cmd = [sys.executable, str(ROOT_DIR / "scripts" / "snapshot.py"), "--max-age-minutes", "4.0"]
     if refresh:
         cmd.append("--refresh")
@@ -50,10 +50,18 @@ def run_snapshot(refresh: bool = False) -> bool:
         log.info("Snapshot thành công.")
         for line in res.stdout.strip().splitlines()[-3:]:
             log.info("  | %s", line)
-        return True
     except subprocess.CalledProcessError as exc:
         log.error("Snapshot thất bại (mã %d): %s", exc.returncode, exc.stderr)
         return False
+
+    cmd_meta = [sys.executable, str(ROOT_DIR / "scripts" / "refresh_meta.py")]
+    try:
+        subprocess.run(cmd_meta, cwd=ROOT_DIR, capture_output=True, text=True, encoding="utf-8", check=True)
+        log.info("Làm mới meta.json thành công.")
+        return True
+    except subprocess.CalledProcessError as exc:
+        log.warning("Làm mới meta.json cảnh báo (mã %d): %s", exc.returncode, exc.stderr)
+        return True
 
 
 def run_push(commit_msg: str | None = None) -> bool:
