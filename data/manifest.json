@@ -218,5 +218,8 @@
   "benchmark": {
     "symbol": "VNINDEX",
     "sessions": 2293
-  }
+  },
+  "last_snapshot_at": "2026-11-03T01:41:59+07:00",
+  "last_snapshot_bar_date": "2026-11-02",
+  "last_snapshot_session": "pre_open"
 }
