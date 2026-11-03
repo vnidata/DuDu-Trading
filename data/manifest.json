@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-03T15:31:46+07:00",
+  "generated_at": "2026-11-03T15:46:29+00:00",
   "group": "VN100",
   "start": "2016-01-01",
   "end": null,
@@ -218,8 +218,5 @@
   "benchmark": {
     "symbol": "VNINDEX",
     "sessions": 2294
-  },
-  "last_snapshot_at": "2026-11-03T15:42:40+07:00",
-  "last_snapshot_bar_date": "2026-11-03",
-  "last_snapshot_session": "closed"
+  }
 }
